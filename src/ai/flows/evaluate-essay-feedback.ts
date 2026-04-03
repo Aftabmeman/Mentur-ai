@@ -1,69 +1,89 @@
+
 'use server';
 /**
- * @fileOverview An AI agent for evaluating student essays using Groq.
- *
- * - evaluateEssayFeedback - A function that handles the essay evaluation process.
- * - EvaluateEssayFeedbackInput - The input type for the evaluateEssayFeedback function.
- * - EvaluateEssayFeedbackOutput - The return type for the evaluateEssayFeedback function.
+ * @fileOverview An AI agent for evaluating student essays using direct Groq API calls.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const EvaluateEssayFeedbackInputSchema = z.object({
-  essayText: z.string().describe('The typed content of the essay.'),
-  topic: z.string().describe('The topic of the essay.'),
-  academicLevel: z.enum(['High School', 'College', 'Graduate', 'Other']).describe('The academic level for which the essay is written.'),
-  rubric: z.string().optional().describe('An optional rubric or specific criteria for evaluation.'),
+  essayText: z.string(),
+  topic: z.string(),
+  academicLevel: z.enum(['High School', 'College', 'Graduate', 'Other']),
+  rubric: z.string().optional(),
 });
 export type EvaluateEssayFeedbackInput = z.infer<typeof EvaluateEssayFeedbackInputSchema>;
 
 const EvaluateEssayFeedbackOutputSchema = z.object({
-  score: z.number().int().min(0).max(100).describe('Overall score for the essay out of 100.'),
-  strengths: z.array(z.string()).describe('A list of specific strengths observed in the essay.'),
-  weaknesses: z.array(z.string()).describe('A list of specific weaknesses observed in the essay.'),
-  improvementSuggestions: z.array(z.string()).describe('Actionable suggestions for how the student can improve their essay writing.'),
-  modelAnswerOutline: z.array(z.string()).describe('A structural outline of a model answer for the given essay topic, covering key points and organization.'),
+  score: z.number().int().min(0).max(100),
+  strengths: z.array(z.string()),
+  weaknesses: z.array(z.string()),
+  improvementSuggestions: z.array(z.string()),
+  modelAnswerOutline: z.array(z.string()),
 });
 export type EvaluateEssayFeedbackOutput = z.infer<typeof EvaluateEssayFeedbackOutputSchema>;
 
 export async function evaluateEssayFeedback(input: EvaluateEssayFeedbackInput): Promise<EvaluateEssayFeedbackOutput> {
-  return evaluateEssayFeedbackFlow(input);
-}
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error("GROQ_API_KEY is not set");
 
-const prompt = ai.definePrompt({
-  name: 'evaluateEssayFeedbackPrompt',
-  input: { schema: EvaluateEssayFeedbackInputSchema },
-  output: { schema: EvaluateEssayFeedbackOutputSchema },
-  model: 'groq/llama-3.1-8b-instant',
-  prompt: `You are an expert essay evaluator. Your task is to provide comprehensive feedback on the student's essay.
+  const systemPrompt = `You are an expert essay evaluator. Your task is to provide comprehensive feedback on the student's essay.
+Format your response as a valid JSON object strictly following the output schema.
+Schema:
+{
+  "score": number,
+  "strengths": ["string"],
+  "weaknesses": ["string"],
+  "improvementSuggestions": ["string"],
+  "modelAnswerOutline": ["string"]
+}`;
 
-Academic Level: {{{academicLevel}}}
-Essay Topic: {{{topic}}}
-{{#if rubric}}
-Evaluation Rubric: {{{rubric}}}
-{{/if}}
+  const userPrompt = `Academic Level: ${input.academicLevel}
+Essay Topic: ${input.topic}
+${input.rubric ? `Evaluation Rubric: ${input.rubric}` : ''}
 
 Critically analyze the provided essay and generate:
-1.  An overall score out of 100.
-2.  A list of specific strengths.
-3.  A list of specific weaknesses.
-4.  Actionable suggestions for improvement.
-5.  A structural outline of a model answer for this essay topic, covering key points and organization.
+1. An overall score out of 100.
+2. A list of specific strengths.
+3. A list of specific weaknesses.
+4. Actionable suggestions for improvement.
+5. A structural outline of a model answer.
 
 --- Student Essay ---
-{{{essayText}}}
---- End Student Essay ---`,
-});
+${input.essayText}
+--- End Student Essay ---`;
 
-const evaluateEssayFeedbackFlow = ai.defineFlow(
-  {
-    name: 'evaluateEssayFeedbackFlow',
-    inputSchema: EvaluateEssayFeedbackInputSchema,
-    outputSchema: EvaluateEssayFeedbackOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-8b-instant',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.5,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Groq API Error:", errorData);
+    throw new Error(`Groq API Error: ${response.statusText}`);
   }
-);
+
+  const data = await response.json();
+  const content = data.choices[0].message.content;
+
+  try {
+    const parsed = JSON.parse(content);
+    return EvaluateEssayFeedbackOutputSchema.parse(parsed);
+  } catch (e) {
+    console.error("Failed to parse LLM output:", content);
+    throw new Error("Invalid evaluation data generated by AI.");
+  }
+}
