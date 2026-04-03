@@ -24,7 +24,12 @@ import {
   RotateCw,
   Trophy,
   BookOpen,
-  EyeOff
+  EyeOff,
+  Sparkles,
+  MessageSquare,
+  ClipboardCheck,
+  TrendingUp,
+  AlertCircle
 } from "lucide-react"
 import { 
   Select, 
@@ -35,7 +40,9 @@ import {
 } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { generateStudyAssessments, type GenerateStudyAssessmentsOutput } from "@/ai/flows/generate-study-assessments-flow"
+import { evaluateEssayFeedback, type EvaluateEssayFeedbackOutput } from "@/ai/flows/evaluate-essay-feedback"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -52,6 +59,13 @@ export default function AssessmentsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<GenerateStudyAssessmentsOutput | null>(null)
   
+  // Mixed Mode & Journey States
+  const [mixedStep, setMixedStep] = useState<'quiz' | 'essay' | 'mentorship' | null>(null)
+  const [userEssayContent, setUserEssayContent] = useState("")
+  const [isEvaluating, setIsEvaluating] = useState(false)
+  const [mentorshipReport, setMentorshipReport] = useState<EvaluateEssayFeedbackOutput | null>(null)
+  const [quizScore, setQuizScore] = useState(0)
+
   // Quiz Mode States
   const [isQuizMode, setIsQuizMode] = useState(false)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -71,7 +85,7 @@ export default function AssessmentsPage() {
   const [isExtracting, setIsExtracting] = useState(false)
   const [extractProgress, setExtractProgress] = useState(0)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  fileInputRef = useRef<HTMLInputElement>(null)
   
   const { toast } = useToast()
 
@@ -182,6 +196,9 @@ export default function AssessmentsPage() {
     if (isAnswerRevealed) return
     setSelectedOption(option)
     setIsAnswerRevealed(true)
+    
+    const isCorrect = option === result?.mcqs?.[currentQuestionIndex].correctAnswer
+    if (isCorrect) setQuizScore(prev => prev + 1)
   }
 
   const nextQuestion = () => {
@@ -191,11 +208,20 @@ export default function AssessmentsPage() {
       setSelectedOption(null)
       setIsAnswerRevealed(false)
     } else {
-      setIsQuizMode(false)
-      toast({
-        title: "Quiz Finished!",
-        description: "You've completed all MCQs in this set."
-      })
+      if (questionType === "Mixed") {
+        setMixedStep('essay')
+        setIsQuizMode(false)
+        toast({
+          title: "Quiz Stage Complete",
+          description: "Moving to Essay stage of your mentorship journey."
+        })
+      } else {
+        setIsQuizMode(false)
+        toast({
+          title: "Quiz Finished!",
+          description: `You scored ${quizScore} out of ${mcqs.length}.`
+        })
+      }
     }
   }
 
@@ -210,9 +236,46 @@ export default function AssessmentsPage() {
     }
     setIsQuizMode(true)
     setIsFlashcardMode(false)
+    setMixedStep('quiz')
     setCurrentQuestionIndex(0)
     setSelectedOption(null)
     setIsAnswerRevealed(false)
+    setQuizScore(0)
+  }
+
+  const handleSubmitEssay = async () => {
+    if (!userEssayContent.trim()) {
+      toast({
+        title: "Empty Essay",
+        description: "Please write your response before submitting.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsEvaluating(true)
+    try {
+      const evaluation = await evaluateEssayFeedback({
+        essayText: userEssayContent,
+        topic: "Mentorship Journey Response",
+        academicLevel: level as any,
+        question: result?.essayPrompts?.[0]?.prompt,
+      })
+      setMentorshipReport(evaluation)
+      setMixedStep('mentorship')
+      toast({
+        title: "Mentorship Report Ready",
+        description: "Your comprehensive academic feedback has been generated."
+      })
+    } catch (error) {
+      toast({
+        title: "Evaluation Error",
+        description: "Mentur AI could not evaluate the essay. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsEvaluating(false)
+    }
   }
 
   const startFlashcards = () => {
@@ -226,6 +289,7 @@ export default function AssessmentsPage() {
     }
     setIsFlashcardMode(true)
     setIsQuizMode(false)
+    setMixedStep(null)
     setCurrentFlashIndex(0)
     setIsFlipped(false)
     setMasteredCount(0)
@@ -523,14 +587,17 @@ export default function AssessmentsPage() {
         <div className="max-w-3xl mx-auto space-y-8 animate-in slide-in-from-right-4 duration-500">
           <div className="flex items-center justify-between">
              <div className="flex items-center gap-4">
-                <Button variant="ghost" onClick={() => setIsQuizMode(false)} className="text-slate-500 hover:text-slate-900">
-                  Exit Quiz
+                <Button variant="ghost" onClick={() => { setIsQuizMode(false); setMixedStep(null); }} className="text-slate-500 hover:text-slate-900">
+                  Exit Journey
                 </Button>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-slate-400">Question {currentQuestionIndex + 1} of {result.mcqs?.length}</span>
                   <Progress value={((currentQuestionIndex + 1) / (result.mcqs?.length || 1)) * 100} className="w-32 h-1.5" />
                 </div>
              </div>
+             {questionType === "Mixed" && (
+                <Badge className="bg-primary/20 text-primary border-none">Mixed Journey: Stage 1</Badge>
+             )}
           </div>
 
           <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
@@ -603,11 +670,202 @@ export default function AssessmentsPage() {
                 onClick={nextQuestion}
                 className="h-14 px-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-lg shadow-2xl transition-transform hover:scale-105"
               >
-                {currentQuestionIndex < (result.mcqs?.length || 0) - 1 ? "Next Question" : "View Results"}
+                {currentQuestionIndex < (result.mcqs?.length || 0) - 1 ? "Next Question" : (questionType === "Mixed" ? "Start Essay Stage" : "View Results")}
                 <ChevronRight className="ml-2 h-6 w-6" />
               </Button>
             </div>
           )}
+        </div>
+      ) : mixedStep === 'essay' ? (
+        <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-right-4 duration-500">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold font-headline text-slate-900 flex items-center gap-3">
+              <MessageSquare className="h-6 w-6 text-primary" />
+              Stage 2: Critical Writing
+            </h2>
+            <Badge className="bg-primary/20 text-primary border-none">Mixed Journey: Stage 2</Badge>
+          </div>
+
+          <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
+            <CardHeader className="bg-slate-900 text-white p-8">
+              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-2">Mentur Prompt</p>
+              <CardTitle className="text-2xl font-headline leading-tight">
+                {result.essayPrompts?.[0]?.prompt || "Summarize the key findings from the provided material and discuss their implications."}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-500 uppercase">Your Analysis</label>
+                <Textarea 
+                  placeholder="Start writing your response here..."
+                  className="min-h-[400px] rounded-2xl p-6 text-lg border-2 focus-visible:ring-primary/20 resize-none leading-relaxed"
+                  value={userEssayContent}
+                  onChange={(e) => setUserEssayContent(e.target.value)}
+                />
+                <div className="flex justify-between items-center px-2">
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Word Count: <span className="text-primary">{userEssayContent.trim().split(/\s+/).filter(Boolean).length}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">Take your time. Deep analysis leads to better mentorship.</p>
+                </div>
+              </div>
+
+              <div className="flex justify-center pt-4">
+                <Button 
+                  size="lg"
+                  onClick={handleSubmitEssay}
+                  disabled={isEvaluating}
+                  className="h-14 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-xl shadow-primary/20"
+                >
+                  {isEvaluating ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Mentor is reviewing...
+                    </>
+                  ) : (
+                    <>
+                      Complete Journey & Get Mentorship
+                      <Sparkles className="ml-2 h-5 w-5 fill-current" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : mixedStep === 'mentorship' ? (
+        <div className="max-w-5xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+           <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold font-headline text-slate-900">Stage 3: Mentur Final Report</h2>
+              <Button variant="ghost" onClick={() => { setResult(null); setMixedStep(null); }} className="text-primary font-bold">
+                ← New Study Journey
+              </Button>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             <div className="space-y-6">
+                <Card className="border-none shadow-xl rounded-3xl bg-slate-900 text-white overflow-hidden p-8">
+                   <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-6">Foundational Knowledge</h3>
+                   <div className="flex flex-col items-center">
+                      <div className="relative h-40 w-40 flex items-center justify-center">
+                        <svg className="h-full w-full transform -rotate-90">
+                          <circle cx="80" cy="80" r="70" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                          <circle 
+                            cx="80" cy="80" r="70" fill="transparent" stroke="hsl(var(--primary))" 
+                            strokeWidth="12" strokeDasharray={440} 
+                            strokeDashoffset={440 - (440 * quizScore) / (result.mcqs?.length || 1)}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="absolute flex flex-col items-center">
+                          <span className="text-4xl font-black font-headline">{quizScore}/{result.mcqs?.length}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase">Quiz Accuracy</span>
+                        </div>
+                      </div>
+                      <p className="mt-8 text-center text-sm text-slate-400 leading-relaxed italic">
+                        "Your foundational understanding of this topic is {quizScore / (result.mcqs?.length || 1) > 0.8 ? 'excellent' : 'developing'}. Focus on the AI explanations in areas you missed."
+                      </p>
+                   </div>
+                </Card>
+
+                <Card className="border-none shadow-xl rounded-3xl p-8 bg-white text-center">
+                   <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">Critical Thinking Score</h3>
+                   <div className="relative h-44 w-44 flex items-center justify-center mx-auto">
+                    <svg className="h-full w-full transform -rotate-90">
+                      <circle cx="88" cy="88" r="75" fill="transparent" stroke="#f1f5f9" strokeWidth="12" />
+                      <circle 
+                        cx="88" cy="88" r="75" fill="transparent" stroke="hsl(var(--primary))" 
+                        strokeWidth="12" strokeDasharray={471} 
+                        strokeDashoffset={471 - (471 * (mentorshipReport?.score || 0)) / 10}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute flex flex-col items-center">
+                      <span className="text-6xl font-black font-headline text-slate-900">{mentorshipReport?.score || 0}</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase">out of 10</span>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="mt-8 bg-emerald-50 text-emerald-600 border-none font-bold uppercase py-1 px-4">
+                     Writing Performance
+                  </Badge>
+                </Card>
+             </div>
+
+             <div className="lg:col-span-2 space-y-6">
+                <Card className="border-none shadow-xl rounded-3xl p-8 bg-white">
+                   <CardTitle className="font-headline flex items-center gap-2 mb-6">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      Mentor's Deep Analysis
+                   </CardTitle>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                         <h4 className="text-sm font-bold text-emerald-600 flex items-center gap-2">
+                           <ClipboardCheck className="h-4 w-4" /> Structural Strengths
+                         </h4>
+                         <ul className="space-y-3">
+                            {mentorshipReport?.strengths.map((s, i) => (
+                              <li key={i} className="text-sm text-slate-700 flex gap-3">
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                {s}
+                              </li>
+                            ))}
+                         </ul>
+                      </div>
+                      <div className="space-y-4">
+                         <h4 className="text-sm font-bold text-amber-600 flex items-center gap-2">
+                           <AlertCircle className="h-4 w-4" /> Technical & Grammatical Refinement
+                         </h4>
+                         <ul className="space-y-3">
+                            {mentorshipReport?.weaknesses.map((w, i) => (
+                              <li key={i} className="text-sm text-slate-700 flex gap-3">
+                                <div className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                                {w}
+                              </li>
+                            ))}
+                         </ul>
+                      </div>
+                   </div>
+                </Card>
+
+                <Card className="border-none shadow-xl rounded-3xl p-8 bg-white">
+                   <CardTitle className="font-headline flex items-center gap-2 mb-6">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      Mentor's Improvement Roadmap
+                   </CardTitle>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {mentorshipReport?.improvementSuggestions.map((s, i) => (
+                        <div key={i} className="flex gap-4 items-start p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                          <div className="bg-primary text-primary-foreground h-8 w-8 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 shadow-lg shadow-primary/20">
+                            {i + 1}
+                          </div>
+                          <p className="text-sm text-slate-700 leading-relaxed font-medium">{s}</p>
+                        </div>
+                      ))}
+                    </div>
+                </Card>
+
+                <Card className="border-none shadow-2xl rounded-3xl overflow-hidden bg-slate-900 text-slate-100">
+                   <CardHeader className="p-8 pb-4">
+                      <CardTitle className="text-xl font-headline flex items-center gap-2">
+                        Professional Answer Blueprint
+                      </CardTitle>
+                      <CardDescription className="text-slate-400">Compare your response against this high-scoring structural guide.</CardDescription>
+                   </CardHeader>
+                   <CardContent className="p-8 pt-0">
+                      <div className="space-y-4 mt-4">
+                        {mentorshipReport?.modelAnswerOutline.map((point, i) => (
+                          <div key={i} className="flex gap-4 group">
+                             <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold text-primary border border-white/10 shrink-0">
+                               {i + 1}
+                             </div>
+                             <p className="text-sm py-1.5 font-medium text-slate-300 leading-relaxed">{point}</p>
+                          </div>
+                        ))}
+                      </div>
+                   </CardContent>
+                </Card>
+             </div>
+           </div>
         </div>
       ) : isFlashcardMode ? (
         <div className="max-w-3xl mx-auto space-y-8 animate-in slide-in-from-right-4 duration-500">
@@ -713,21 +971,32 @@ export default function AssessmentsPage() {
               ← Create New Set
             </Button>
             <div className="flex gap-3">
-              <Button 
-                onClick={startFlashcards}
-                className="rounded-xl px-8 h-12 bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-xl shadow-amber-500/20"
-              >
-                <BookOpen className="mr-2 h-4 w-4" />
-                Flashcard Study
-              </Button>
-              <Button 
-                onClick={startQuiz}
-                className="rounded-xl px-8 h-12 bg-primary hover:bg-primary/90 text-white font-bold shadow-xl shadow-primary/20"
-              >
-                <Zap className="mr-2 h-4 w-4 fill-current" />
-                Take Quiz Mode
-              </Button>
-              <Button variant="outline" className="rounded-xl px-6 h-12 border-slate-200 font-bold">Save Study Set</Button>
+              {questionType === "Mixed" ? (
+                 <Button 
+                  onClick={startQuiz}
+                  className="rounded-xl px-12 h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-2xl shadow-slate-900/20"
+                >
+                  <Sparkles className="mr-2 h-4 w-4 text-primary fill-current" />
+                  Start Mentur Journey
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    onClick={startFlashcards}
+                    className="rounded-xl px-8 h-12 bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-xl shadow-amber-500/20"
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Flashcard Study
+                  </Button>
+                  <Button 
+                    onClick={startQuiz}
+                    className="rounded-xl px-8 h-12 bg-primary hover:bg-primary/90 text-white font-bold shadow-xl shadow-primary/20"
+                  >
+                    <Zap className="mr-2 h-4 w-4 fill-current" />
+                    Take Quiz Mode
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -745,6 +1014,7 @@ export default function AssessmentsPage() {
               <div className="flex gap-2">
                 <Badge variant="secondary" className="bg-white px-3 py-1">{result.mcqs?.length || 0} MCQs</Badge>
                 <Badge variant="secondary" className="bg-white px-3 py-1">{result.flashcards?.length || 0} Flashcards</Badge>
+                <Badge variant="secondary" className="bg-white px-3 py-1">{result.essayPrompts?.length || 0} Essays</Badge>
               </div>
             </div>
 
