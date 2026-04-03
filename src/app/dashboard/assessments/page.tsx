@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -22,7 +23,8 @@ import {
   Type,
   RotateCw,
   Trophy,
-  BookOpen
+  BookOpen,
+  EyeOff
 } from "lucide-react"
 import { 
   Select, 
@@ -73,7 +75,6 @@ export default function AssessmentsPage() {
   
   const { toast } = useToast()
 
-  // Dynamic Question Count Range logic
   useEffect(() => {
     if (difficulty === "Easy") {
       if (count > 10) setCount(10)
@@ -125,7 +126,7 @@ export default function AssessmentsPage() {
 
     setTimeout(() => {
       setIsExtracting(false)
-      const mockText = `[AI Content Extracted from ${file.name}]: Study material processing complete. Please review the extracted text and proceed with generation.`
+      const mockText = `Study material processing complete for ${file.name}. Content has been ingested for assessment generation.`
       setMaterial(mockText)
       toast({
         title: "Extraction Complete",
@@ -233,7 +234,7 @@ export default function AssessmentsPage() {
   }
 
   const handleCardFeedback = (status: 'known' | 'learning') => {
-    if (cardStatus[currentFlashIndex]) return // Prevent double counting
+    if (cardStatus[currentFlashIndex]) return 
 
     setCardStatus(prev => ({ ...prev, [currentFlashIndex]: status }))
     if (status === 'known') {
@@ -738,7 +739,7 @@ export default function AssessmentsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900">Generated for {level}</h3>
-                  <p className="text-sm text-slate-500">Review your customized academic items below.</p>
+                  <p className="text-sm text-slate-500">Review your customized academic items below (Answers are hidden until you start).</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -761,13 +762,14 @@ export default function AssessmentsPage() {
                     {mcq.options.map((opt, j) => (
                       <div 
                         key={j} 
-                        className={`p-3 rounded-xl border text-sm transition-colors ${
-                          opt === mcq.correctAnswer ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-medium' : 'bg-slate-50 border-slate-100'
-                        }`}
+                        className="p-3 rounded-xl border text-sm bg-slate-50 border-slate-100"
                       >
                         {opt}
                       </div>
                     ))}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2 italic">
+                    <EyeOff className="h-3 w-3" /> Start Quiz to see correct answer
                   </div>
                 </CardContent>
               </Card>
@@ -786,9 +788,11 @@ export default function AssessmentsPage() {
                     <p className="text-xs font-bold text-amber-600 uppercase tracking-widest">FRONT</p>
                     <p className="text-lg font-bold text-slate-900">{card.front}</p>
                   </div>
-                  <div className="pt-4 border-t border-amber-200/50 space-y-1">
+                  <div className="pt-4 border-t border-amber-200/50 space-y-1 opacity-50">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">BACK</p>
-                    <p className="text-slate-700 leading-relaxed">{card.back}</p>
+                    <div className="flex items-center gap-2 text-sm text-slate-400 italic">
+                      <EyeOff className="h-3 w-3" /> Start Flashcard study to reveal answer
+                    </div>
                   </div>
                 </CardContent>
               </Card>
