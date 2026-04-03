@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -29,7 +28,8 @@ import {
   MessageSquare,
   ClipboardCheck,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Cpu
 } from "lucide-react"
 import { 
   Select, 
@@ -870,6 +870,28 @@ export default function AssessmentsPage() {
                      Writing Performance
                   </Badge>
                 </Card>
+
+                {mentorshipReport?.usage && (
+                   <Card className="border-none shadow-sm bg-slate-50 p-6 rounded-3xl">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
+                        <Cpu className="h-3 w-3" /> AI Usage Report
+                      </h4>
+                      <div className="space-y-2">
+                         <div className="flex justify-between text-xs font-medium">
+                            <span className="text-slate-500">Prompt Tokens</span>
+                            <span className="text-slate-900">{mentorshipReport.usage.prompt_tokens}</span>
+                         </div>
+                         <div className="flex justify-between text-xs font-medium">
+                            <span className="text-slate-500">Completion Tokens</span>
+                            <span className="text-slate-900">{mentorshipReport.usage.completion_tokens}</span>
+                         </div>
+                         <div className="border-t border-slate-200 pt-2 flex justify-between text-xs font-bold">
+                            <span className="text-slate-600">Total Tokens</span>
+                            <span className="text-primary">{mentorshipReport.usage.total_tokens}</span>
+                         </div>
+                      </div>
+                   </Card>
+                )}
              </div>
 
              <div className="lg:col-span-2 space-y-6">
@@ -1098,6 +1120,32 @@ export default function AssessmentsPage() {
                 <Badge variant="secondary" className="bg-white px-3 py-1">{result.essayPrompts?.length || 0} Essays</Badge>
               </div>
             </div>
+
+            {result.usage && (
+               <Card className="lg:col-span-2 border-none shadow-sm bg-slate-900 text-white rounded-2xl overflow-hidden p-6">
+                  <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <Cpu className="h-5 w-5 text-primary" />
+                        <h4 className="font-bold font-headline">AI Generation usage Report</h4>
+                     </div>
+                     <Badge className="bg-primary/20 text-primary border-none">Analysis Complete</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-8 mt-6">
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prompt Tokens</p>
+                        <p className="text-xl font-black">{result.usage.prompt_tokens}</p>
+                     </div>
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completion Tokens</p>
+                        <p className="text-xl font-black">{result.usage.completion_tokens}</p>
+                     </div>
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Total Tokens</p>
+                        <p className="text-xl font-black text-primary">{result.usage.total_tokens}</p>
+                     </div>
+                  </div>
+               </Card>
+            )}
 
             {result.mcqs?.map((mcq, i) => (
               <Card key={i} className="border-none shadow-sm hover:shadow-md transition-shadow">

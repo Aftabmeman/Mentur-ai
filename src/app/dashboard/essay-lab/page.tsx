@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef } from "react"
@@ -18,7 +17,8 @@ import {
   FileImage,
   X,
   Loader2,
-  Trophy
+  Trophy,
+  Cpu
 } from "lucide-react"
 import { 
   Select, 
@@ -348,28 +348,52 @@ export default function EssayLabPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <Card className="border-none shadow-xl flex flex-col items-center justify-center p-8 bg-white text-center rounded-3xl">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-2">Academic Score</h3>
-              <div className="relative h-44 w-44 flex items-center justify-center">
-                <svg className="h-full w-full transform -rotate-90">
-                  <circle cx="88" cy="88" r="75" fill="transparent" stroke="#f1f5f9" strokeWidth="12" />
-                  <circle 
-                    cx="88" cy="88" r="75" fill="transparent" stroke="hsl(var(--primary))" 
-                    strokeWidth="12" strokeDasharray={471} 
-                    strokeDashoffset={471 - (471 * result.score) / 10}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000 ease-out"
-                  />
-                </svg>
-                <div className="absolute flex flex-col items-center">
-                  <span className="text-6xl font-black font-headline text-slate-900">{result.score}</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">out of 10</span>
+            <div className="space-y-6">
+               <Card className="border-none shadow-xl flex flex-col items-center justify-center p-8 bg-white text-center rounded-3xl">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-2">Academic Score</h3>
+                <div className="relative h-44 w-44 flex items-center justify-center">
+                  <svg className="h-full w-full transform -rotate-90">
+                    <circle cx="88" cy="88" r="75" fill="transparent" stroke="#f1f5f9" strokeWidth="12" />
+                    <circle 
+                      cx="88" cy="88" r="75" fill="transparent" stroke="hsl(var(--primary))" 
+                      strokeWidth="12" strokeDasharray={471} 
+                      strokeDashoffset={471 - (471 * result.score) / 10}
+                      strokeLinecap="round"
+                      className="transition-all duration-1000 ease-out"
+                    />
+                  </svg>
+                  <div className="absolute flex flex-col items-center">
+                    <span className="text-6xl font-black font-headline text-slate-900">{result.score}</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">out of 10</span>
+                  </div>
                 </div>
-              </div>
-              <p className="mt-6 text-sm font-bold text-primary flex items-center gap-2">
-                <Trophy className="h-4 w-4" /> {result.score >= 8 ? "Exceptional Work" : result.score >= 6 ? "Solid Performance" : "Needs Review"}
-              </p>
-            </Card>
+                <p className="mt-6 text-sm font-bold text-primary flex items-center gap-2">
+                  <Trophy className="h-4 w-4" /> {result.score >= 8 ? "Exceptional Work" : result.score >= 6 ? "Solid Performance" : "Needs Review"}
+                </p>
+              </Card>
+
+              {result.usage && (
+                 <Card className="border-none shadow-sm bg-slate-50 p-6 rounded-3xl">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
+                      <Cpu className="h-3 w-3" /> AI Usage Report
+                    </h4>
+                    <div className="space-y-2">
+                       <div className="flex justify-between text-xs font-medium">
+                          <span className="text-slate-500">Prompt Tokens</span>
+                          <span className="text-slate-900">{result.usage.prompt_tokens}</span>
+                       </div>
+                       <div className="flex justify-between text-xs font-medium">
+                          <span className="text-slate-500">Completion Tokens</span>
+                          <span className="text-slate-900">{result.usage.completion_tokens}</span>
+                       </div>
+                       <div className="border-t border-slate-200 pt-2 flex justify-between text-xs font-bold">
+                          <span className="text-slate-600">Total Tokens</span>
+                          <span className="text-primary">{result.usage.total_tokens}</span>
+                       </div>
+                    </div>
+                 </Card>
+              )}
+            </div>
 
             <div className="lg:col-span-3 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
