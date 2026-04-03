@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -65,6 +66,10 @@ export default function AssessmentsPage() {
   const [mentorshipReport, setMentorshipReport] = useState<EvaluateEssayFeedbackOutput | null>(null)
   const [quizScore, setQuizScore] = useState(0)
 
+  // Essay Journey Input Type (Typed vs Handwritten)
+  const [essayInputMethod, setEssayInputMethod] = useState<'typed' | 'handwritten'>('typed')
+  const [isTranscribing, setIsTranscribing] = useState(false)
+
   // Quiz Mode States
   const [isQuizMode, setIsQuizMode] = useState(false)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -84,7 +89,9 @@ export default function AssessmentsPage() {
   const [isExtracting, setIsExtracting] = useState(false)
   const [extractProgress, setExtractProgress] = useState(0)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const essayImageInputRef = useRef<HTMLInputElement>(null)
   
   const { toast } = useToast()
 
@@ -94,12 +101,12 @@ export default function AssessmentsPage() {
     } else if (difficulty === "Medium") {
       if (count > 15) setCount(15)
     } else if (difficulty === "Hard") {
-      if (count < 20) setCount(20)
+      if (count > 25) setCount(25)
     }
   }, [difficulty])
 
   const maxCount = difficulty === "Easy" ? 10 : difficulty === "Medium" ? 15 : 25
-  const minCount = difficulty === "Hard" ? 10 : 1
+  const minCount = 1
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -146,6 +153,22 @@ export default function AssessmentsPage() {
         description: `Successfully extracted text from ${file.name}.`
       })
     }, 2500)
+  }
+
+  const handleEssayImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      setIsTranscribing(true)
+      // Simulate Handwriting OCR
+      setTimeout(() => {
+        setUserEssayContent(`[TRANSCRIPT FROM HANDWRITTEN PHOTO: ${file.name}]\n\nThe core concepts discussed in the material highlights the importance of adaptive systems in modern pedagogy. By leveraging AI, we can bridge the gap between theoretical knowledge and practical application...`)
+        setIsTranscribing(false)
+        toast({
+          title: "Transcription Success",
+          description: "Your handwritten work has been digitized for evaluation."
+        })
+      }, 2000)
+    }
   }
 
   const clearFile = () => {
@@ -246,7 +269,7 @@ export default function AssessmentsPage() {
     if (!userEssayContent.trim()) {
       toast({
         title: "Empty Essay",
-        description: "Please write your response before submitting.",
+        description: "Please write or upload your response before submitting.",
         variant: "destructive"
       })
       return
@@ -259,6 +282,7 @@ export default function AssessmentsPage() {
         topic: "Mentorship Journey Response",
         academicLevel: level as any,
         question: result?.essayPrompts?.[0]?.prompt,
+        wordLimit: essayWordLimit
       })
       setMentorshipReport(evaluation)
       setMixedStep('mentorship')
@@ -685,6 +709,11 @@ export default function AssessmentsPage() {
             <Badge className="bg-primary/20 text-primary border-none">Mixed Journey: Stage 2</Badge>
           </div>
 
+          <div className="bg-blue-50 border border-blue-100 p-6 rounded-3xl text-center">
+             <h3 className="text-xl font-bold text-blue-900 mb-2">Now let's test your writing skills</h3>
+             <p className="text-blue-700 text-sm">Critical thinking is the final pillar of this mentorship journey.</p>
+          </div>
+
           <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
             <CardHeader className="bg-slate-900 text-white p-8">
               <p className="text-primary font-bold text-xs uppercase tracking-widest mb-2">Mentur Prompt</p>
@@ -693,27 +722,80 @@ export default function AssessmentsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-500 uppercase">Your Analysis</label>
-                <Textarea 
-                  placeholder="Start writing your response here..."
-                  className="min-h-[400px] rounded-2xl p-6 text-lg border-2 focus-visible:ring-primary/20 resize-none leading-relaxed"
-                  value={userEssayContent}
-                  onChange={(e) => setUserEssayContent(e.target.value)}
-                />
-                <div className="flex justify-between items-center px-2">
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Word Count: <span className="text-primary">{userEssayContent.trim().split(/\s+/).filter(Boolean).length}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground italic">Take your time. Deep analysis leads to better mentorship.</p>
-                </div>
+              
+              <div className="flex justify-center mb-6">
+                <Tabs value={essayInputMethod} onValueChange={(val) => setEssayInputMethod(val as any)} className="w-full max-w-sm">
+                  <TabsList className="grid w-full grid-cols-2 rounded-xl h-11 bg-slate-100">
+                    <TabsTrigger value="typed" className="rounded-lg">Type Answer</TabsTrigger>
+                    <TabsTrigger value="handwritten" className="rounded-lg">Upload Handwritten</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
+
+              {essayInputMethod === 'typed' ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-500 uppercase">Your Analysis</label>
+                  <Textarea 
+                    placeholder="Start writing your response here..."
+                    className="min-h-[400px] rounded-2xl p-6 text-lg border-2 focus-visible:ring-primary/20 resize-none leading-relaxed"
+                    value={userEssayContent}
+                    onChange={(e) => setUserEssayContent(e.target.value)}
+                  />
+                  <div className="flex justify-between items-center px-2">
+                    <p className="text-xs text-muted-foreground font-medium">
+                      Word Count: <span className="text-primary">{userEssayContent.trim().split(/\s+/).filter(Boolean).length}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">Take your time. Deep analysis leads to better mentorship.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                   <div 
+                    onClick={() => essayImageInputRef.current?.click()}
+                    className="w-full min-h-[400px] border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center p-8 transition-all hover:bg-slate-50 hover:border-primary/30 cursor-pointer group"
+                  >
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      ref={essayImageInputRef} 
+                      onChange={handleEssayImageUpload}
+                      accept="image/*"
+                    />
+                    <div className="h-24 w-24 bg-primary/5 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                      <FileImage className="h-12 w-12 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Upload handwritten work</h3>
+                    <p className="text-slate-500 text-center max-w-xs mb-8">
+                      Mentur AI will transcribe and analyze your handwriting.
+                    </p>
+                    <Button variant="outline" className="h-12 rounded-xl px-10 border-2 font-bold">Select Image</Button>
+                  </div>
+
+                  {isTranscribing && (
+                    <div className="flex flex-col items-center gap-4 animate-in fade-in">
+                       <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                       <p className="text-sm font-bold text-slate-500">Transcribing handwriting...</p>
+                    </div>
+                  )}
+
+                  {userEssayContent && !isTranscribing && (
+                    <div className="space-y-2 animate-in slide-in-from-top-4">
+                      <label className="text-sm font-bold text-slate-500 uppercase">Extracted Transcript</label>
+                      <Textarea 
+                        readOnly
+                        className="min-h-[200px] rounded-2xl p-6 bg-slate-50 border-none italic text-slate-600 leading-relaxed"
+                        value={userEssayContent}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex justify-center pt-4">
                 <Button 
                   size="lg"
                   onClick={handleSubmitEssay}
-                  disabled={isEvaluating}
+                  disabled={isEvaluating || isTranscribing}
                   className="h-14 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-xl shadow-primary/20"
                 >
                   {isEvaluating ? (

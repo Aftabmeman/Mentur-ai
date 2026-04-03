@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef } from "react"
@@ -60,7 +61,7 @@ export default function EssayLabPage() {
       // Simulate OCR/Handwriting extraction
       setTimeout(() => {
         setIsProcessingImage(false)
-        setEssayText(`[Handwritten text transcribed from ${file.name} successfully. Please review and evaluate.]`)
+        setEssayText(`[Handwritten text transcribed from ${file.name} successfully]\n\nThe development of renewable energy sources is paramount for future sustainability. While fossil fuels have powered progress for centuries, their environmental toll is now undeniable. Solar and wind technologies offer a path forward, provided we can solve the storage challenges associated with intermittent generation...`)
         toast({
           title: "Transcription Complete",
           description: "Handwritten content has been transcribed for evaluation."
