@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -15,7 +14,8 @@ import {
   Trash2, 
   FileCheck,
   Languages,
-  Clock
+  Clock,
+  Inbox
 } from "lucide-react"
 import { 
   Select, 
@@ -31,6 +31,8 @@ export default function MaterialsPage() {
   const [text, setText] = useState("")
   const [language, setLanguage] = useState("english")
   const { toast } = useToast()
+
+  const materials: any[] = [] // Currently empty, no demo data
 
   const handleUpload = () => {
     if (!title || !text) {
@@ -152,23 +154,30 @@ export default function MaterialsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-accent/10">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="p-5 group hover:bg-white/50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <h4 className="font-semibold text-slate-900 line-clamp-1">Material ID #{i * 1024}</h4>
-                        <p className="text-xs text-muted-foreground flex items-center gap-2">
-                          <Clock className="h-3 w-3" /> May {i + 12}, 2024
-                        </p>
+              {materials.length > 0 ? (
+                <div className="divide-y divide-accent/10">
+                  {materials.map((m, i) => (
+                    <div key={i} className="p-5 group hover:bg-white/50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <h4 className="font-semibold text-slate-900 line-clamp-1">{m.title}</h4>
+                          <p className="text-xs text-muted-foreground flex items-center gap-2">
+                            <Clock className="h-3 w-3" /> {m.date}
+                          </p>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center flex flex-col items-center justify-center">
+                  <Inbox className="h-8 w-8 text-slate-300 mb-2" />
+                  <p className="text-sm text-slate-500 font-medium">Library is empty.</p>
+                </div>
+              )}
               <div className="p-4 bg-accent/5 text-center">
                 <Button variant="link" className="text-accent font-semibold text-sm">
                   Browse Full Library

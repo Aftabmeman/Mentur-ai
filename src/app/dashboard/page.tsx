@@ -9,24 +9,21 @@ import {
   TrendingUp,
   BookOpen,
   ArrowRight,
-  BrainCircuit
+  BrainCircuit,
+  Inbox
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default function DashboardPage() {
   const stats = [
-    { label: "Overall Score", value: "84%", icon: Target, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Assessments Done", value: "24", icon: Trophy, color: "text-amber-500", bg: "bg-amber-50" },
-    { label: "Study Time", value: "12.5h", icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
-    { label: "Improvement", value: "+12%", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
+    { label: "Overall Score", value: "0%", icon: Target, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Assessments Done", value: "0", icon: Trophy, color: "text-amber-500", bg: "bg-amber-50" },
+    { label: "Study Time", value: "0h", icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
+    { label: "Improvement", value: "0%", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
   ]
 
-  const recentMaterials = [
-    { title: "Introduction to Quantum Mechanics", date: "2 hours ago", size: "2.4 MB" },
-    { title: "Global Economics 101", date: "Yesterday", size: "4.1 MB" },
-    { title: "Advanced Calculus - Chapter 4", date: "3 days ago", size: "1.2 MB" },
-  ]
+  const recentMaterials: any[] = []
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -76,7 +73,7 @@ export default function DashboardPage() {
           <CardContent className="h-[300px] flex items-center justify-center text-muted-foreground border-t bg-slate-50/30">
             <div className="flex flex-col items-center gap-3">
               <TrendingUp className="h-12 w-12 text-slate-200" />
-              <p className="text-sm font-medium">Performance data visualization will appear here.</p>
+              <p className="text-sm font-medium">No performance data available yet.</p>
             </div>
           </CardContent>
         </Card>
@@ -87,30 +84,13 @@ export default function DashboardPage() {
             <CardDescription>Where you stand in your current subjects</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm font-medium">
-                <span>Quantum Mechanics</span>
-                <span className="text-primary">92%</span>
-              </div>
-              <Progress value={92} className="h-2 bg-primary/10" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm font-medium">
-                <span>Advanced Calculus</span>
-                <span className="text-primary">78%</span>
-              </div>
-              <Progress value={78} className="h-2 bg-primary/10" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm font-medium">
-                <span>Global Economics</span>
-                <span className="text-primary">64%</span>
-              </div>
-              <Progress value={64} className="h-2 bg-primary/10" />
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <BookOpen className="h-8 w-8 text-slate-300 mb-2" />
+              <p className="text-sm text-slate-500">Add materials to track topic mastery.</p>
             </div>
             <div className="pt-4">
-              <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/5 h-11 rounded-xl">
-                Improve Weak Topics
+              <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/5 h-11 rounded-xl" asChild>
+                <Link href="/dashboard/materials">Add Your First Topic</Link>
               </Button>
             </div>
           </CardContent>
@@ -126,26 +106,34 @@ export default function DashboardPage() {
             </Link>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y">
-              {recentMaterials.map((material, i) => (
-                <div key={i} className="flex items-center justify-between p-4 px-6 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-slate-100 p-2 rounded-lg">
-                      <BookOpen className="h-5 w-5 text-slate-500" />
+            {recentMaterials.length > 0 ? (
+              <div className="divide-y">
+                {recentMaterials.map((material, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 px-6 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-slate-100 p-2 rounded-lg">
+                        <BookOpen className="h-5 w-5 text-slate-500" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900">{material.title}</p>
+                        <p className="text-xs text-muted-foreground">{material.date} • {material.size}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-slate-900">{material.title}</p>
-                      <p className="text-xs text-muted-foreground">{material.date} • {material.size}</p>
-                    </div>
+                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary" asChild>
+                      <Link href="/dashboard/materials">
+                         <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary" asChild>
-                    <Link href="/dashboard/materials">
-                       <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                <Inbox className="h-10 w-10 text-slate-200 mb-4" />
+                <p className="text-slate-500 text-sm font-medium">No materials added yet.</p>
+                <p className="text-slate-400 text-xs mt-1">Upload your notes to see them here.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

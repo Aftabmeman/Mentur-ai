@@ -125,7 +125,7 @@ export default function AssessmentsPage() {
 
     setTimeout(() => {
       setIsExtracting(false)
-      const mockText = `Extracted content from ${file.name}: The subject matter covers fundamental principles and advanced theories relevant to ${level}. Key definitions and conceptual frameworks were identified for assessment generation.`
+      const mockText = `[AI Content Extracted from ${file.name}]: Study material processing complete. Please review the extracted text and proceed with generation.`
       setMaterial(mockText)
       toast({
         title: "Extraction Complete",

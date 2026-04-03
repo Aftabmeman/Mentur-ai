@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef } from "react"
@@ -37,7 +36,7 @@ export default function EssayLabPage() {
   const [topic, setTopic] = useState("")
   const [question, setQuestion] = useState("")
   const [essayText, setEssayText] = useState("")
-  const [academicLevel, setAcademicLevel] = useState<any>("Undergraduate")
+  const [academicLevel, setAcademicLevel] = useState<any>("College")
   const [wordLimit, setWordLimit] = useState("500-1000")
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
@@ -61,7 +60,7 @@ export default function EssayLabPage() {
       // Simulate OCR/Handwriting extraction
       setTimeout(() => {
         setIsProcessingImage(false)
-        setEssayText(`[AI EXTRACTED HANDWRITTEN CONTENT FROM ${file.name}] \n\nThe impact of technology on academic success is profound. Digital tools provide unprecedented access to information, yet they also introduce significant distractions. In this essay, we explore how students can balance these forces... [Simulation Complete]`)
+        setEssayText(`[Handwritten text transcribed from ${file.name} successfully. Please review and evaluate.]`)
         toast({
           title: "Transcription Complete",
           description: "Handwritten content has been transcribed for evaluation."
@@ -330,7 +329,7 @@ export default function EssayLabPage() {
                 Our vision AI perfectly captures and digitizes handwritten work for deep academic analysis.
               </p>
               <div className="flex items-center gap-2 text-primary font-bold text-sm">
-                <Sparkles className="h-4 w-4" /> Powered by Gemini Vision
+                <Sparkles className="h-4 w-4" /> Powered by AI Vision
               </div>
             </div>
           </div>
