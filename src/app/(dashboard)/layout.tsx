@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation';
-
-export default function DeprecatedLayout() {
-  redirect('/dashboard');
+export default function DashboardGroupLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return <>{children}</>;
 }

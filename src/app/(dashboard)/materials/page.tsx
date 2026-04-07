@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
-export default function DeprecatedPage() {
+export default function DeprecatedMaterialsPage() {
   redirect('/dashboard/materials');
 }
