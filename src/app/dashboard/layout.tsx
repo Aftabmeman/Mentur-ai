@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useTheme } from "@/components/providers/ThemeProvider"
-import { Sparkles, Moon, Sun, User, Home, BookOpen, GraduationCap, FileEdit, History, BarChart3 } from "lucide-react"
+import { Sparkles, Moon, Sun, User, Home, BookOpen, GraduationCap, FileEdit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -56,7 +55,7 @@ export default function DashboardLayout({
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto no-scrollbar pb-24 p-6">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-4xl mx-auto">
           {children}
         </div>
       </main>
