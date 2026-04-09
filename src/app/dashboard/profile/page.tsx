@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { LogOut, User, Mail, ShieldCheck, Moon, Sun, ChevronRight, Award, Clock, BookMarked, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 export default function ProfilePage() {
   const { user } = useAuth();
