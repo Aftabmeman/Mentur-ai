@@ -6,16 +6,18 @@ import { useTheme } from "@/components/providers/ThemeProvider"
 import { auth } from "@/lib/firebase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { LogOut, User, Mail, ShieldCheck, Moon, Sun, ChevronRight, Award, Clock, BookMarked, Sparkles } from "lucide-react"
+import { LogOut, User, Mail, ShieldCheck, Moon, Sun, ChevronRight, Award, Clock, BookMarked, Sparkles, BrainCircuit } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { useState } from "react"
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
+  const [logoError, setLogoError] = useState(false);
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -26,13 +28,18 @@ export default function ProfilePage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-28">
       <div className="flex flex-col items-center pt-8 pb-8">
         <div className="h-28 w-28 rounded-[32px] bg-primary/10 border-4 border-background shadow-2xl flex items-center justify-center relative group overflow-hidden">
-          <div className="relative h-20 w-20">
-            <Image 
-              src="/logo.png" 
-              alt="Mentur Logo" 
-              fill 
-              className="object-contain"
-            />
+          <div className="relative h-20 w-20 flex items-center justify-center">
+            {!logoError ? (
+              <Image 
+                src="/logo.png" 
+                alt="Mentur Logo" 
+                fill 
+                className="object-contain"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <BrainCircuit className="h-12 w-12 text-primary" />
+            )}
           </div>
           <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-emerald-500 rounded-2xl border-4 border-background flex items-center justify-center">
              <ShieldCheck className="h-4 w-4 text-white" />
@@ -95,8 +102,18 @@ export default function ProfilePage() {
 
       <footer className="pt-10 text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
-          <div className="relative h-4 w-4">
-            <Image src="/logo.png" alt="Mentur" fill className="object-contain" />
+          <div className="relative h-4 w-4 flex items-center justify-center">
+            {!logoError ? (
+              <Image 
+                src="/logo.png" 
+                alt="Mentur" 
+                fill 
+                className="object-contain"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <BrainCircuit className="h-4 w-4 text-primary" />
+            )}
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Mentur AI Engine</span>
         </div>

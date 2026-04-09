@@ -30,6 +30,7 @@ export default function DashboardLayout({
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const [logoLoaded, setLogoLoaded] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   const hideNav = pathname === "/dashboard/verify-email";
 
@@ -38,18 +39,21 @@ export default function DashboardLayout({
       <header className="h-16 border-b flex items-center justify-between px-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="relative h-8 w-8 flex items-center justify-center">
-             <Image 
-                src="/logo.png" 
-                alt="Mentur Logo" 
-                fill 
-                className={cn("object-contain transition-opacity duration-300", logoLoaded ? "opacity-100" : "opacity-0")}
-                onLoad={() => setLogoLoaded(true)}
-              />
-              {!logoLoaded && (
-                <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <BrainCircuit className="h-4 w-4 text-white" />
-                </div>
-              )}
+            {!logoError ? (
+               <Image 
+                  src="/logo.png" 
+                  alt="Mentur Logo" 
+                  fill 
+                  className={cn("object-contain transition-opacity duration-300", logoLoaded ? "opacity-100" : "opacity-0")}
+                  onLoad={() => setLogoLoaded(true)}
+                  onError={() => { setLogoError(true); setLogoLoaded(true); }}
+                />
+            ) : null}
+            {(logoError || !logoLoaded) && (
+              <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+                <BrainCircuit className="h-4 w-4 text-white" />
+              </div>
+            )}
           </div>
           <span className="text-base font-bold font-headline tracking-tight">Mentur AI</span>
         </div>
