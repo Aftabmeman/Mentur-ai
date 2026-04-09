@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, Sparkles } from "lucide-react"
+import { ChevronRight, Sparkles, BrainCircuit } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function Home() {
@@ -16,13 +16,12 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingStep, setOnboardingStep] = useState(0)
   const [isReturningUser, setIsReturningUser] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
   useEffect(() => {
-    // Check if returning user
     const hasSeenOnboarding = localStorage.getItem("mentur_onboarding_seen")
     setIsReturningUser(!!hasSeenOnboarding)
 
-    // Splash timeout
     const timer = setTimeout(() => {
       setShowSplash(false)
       if (!hasSeenOnboarding) {
@@ -55,22 +54,22 @@ export default function Home() {
     {
       title: "Welcome to Mentur AI",
       desc: "The fastest way to study smarter and ace your exams with AI-powered native focus.",
-      image: "/logo.png"
+      image: "https://picsum.photos/seed/mentur-logo/400/400"
     },
     {
       title: "Built by a Student, for Students",
       desc: "Proudly created by Aftab Ghaswala, a 19-year-old 2nd-year student who truly understands your academic struggles.",
-      image: "/logo.png"
+      image: "https://picsum.photos/seed/mentur-mission/400/400"
     },
     {
       title: "Instant Assessments",
       desc: "Generate custom MCQs, quizzes, and flashcards in seconds from any topic or study material.",
-      image: "/logo.png"
+      image: "https://picsum.photos/seed/mentur-quiz/400/400"
     },
     {
       title: "Boost Your Grades",
       desc: "Get instant mentorship and let Mentur AI guide your educational journey to excellence.",
-      image: "/logo.png"
+      image: "https://picsum.photos/seed/mentur-grade/400/400"
     }
   ]
 
@@ -78,14 +77,21 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-950 animate-in fade-in duration-700">
         <div className="relative group animate-out zoom-out-95 duration-1000 delay-1000 fill-mode-forwards">
-          <div className="h-32 w-32 relative animate-pulse">
-            <Image 
-              src="/logo.png" 
-              alt="Mentur AI Logo" 
-              fill 
-              className="object-contain"
-              priority
-            />
+          <div className="h-32 w-32 relative animate-pulse flex items-center justify-center">
+            {!imgError ? (
+              <Image 
+                src="/logo.png" 
+                alt="Mentur AI Logo" 
+                fill 
+                className="object-contain"
+                onError={() => setImgError(true)}
+                priority
+              />
+            ) : (
+              <div className="h-24 w-24 bg-primary rounded-[32px] flex items-center justify-center shadow-xl">
+                <BrainCircuit className="h-12 w-12 text-white" />
+              </div>
+            )}
           </div>
         </div>
         <div className="mt-8 text-center space-y-2 animate-in slide-in-from-bottom-4 duration-1000 delay-300">
@@ -102,12 +108,13 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 p-8">
         <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 animate-in slide-in-from-right-8 duration-500">
-          <div className="h-48 w-48 relative mb-4">
+          <div className="h-48 w-48 relative mb-4 rounded-[40px] overflow-hidden shadow-2xl">
             <Image 
               src={onboardingCards[onboardingStep].image} 
-              alt="Mentur Logo" 
+              alt="Mentur Step" 
               fill 
-              className="object-contain"
+              className="object-cover"
+              data-ai-hint="academic learning"
             />
           </div>
           <div className="space-y-4 max-w-sm">
