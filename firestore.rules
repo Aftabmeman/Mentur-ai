@@ -1,0 +1,157 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * FIRESTORE SECURITY RULES DOCUMENTATION
+     *
+     * Core Philosophy:
+     * This ruleset enforces a strict user-ownership model. The application architecture is
+     * intentionally designed around a "siloed" data structure where all user-specific 
+     * information is nested under the user's unique identifier.
+     *
+     * Data Structure:
+     * All data is organized hierarchically under /users/{userId}/. This includes profiles,
+     * study materials, assessments, questions, attempts, and essays.
+     *
+     * Key Security Decisions:
+     * 1. Path-Based Authorization: The primary layer of security relies on the {userId}
+     *    parameter in the document path matching the authenticated user's UID.
+     * 2. Authorization Independence: To ensure rules remain performant and avoid 
+     *    expensive get() calls, critical ownership fields (like userId) are denormalized 
+     *    directly into subcollection documents (e.g., Questions, Responses).
+     * 3. Default Private: No data is publicly readable or writable. Users can only
+     *    access their own specific data tree.
+     * 4. Prototyping Flexibility: While authorization is strictly enforced, these rules
+     *    do not validate the specific schema of data fields to allow for rapid development.
+     */
+
+    // --- Helper Functions ---
+
+    /**
+     * @description Checks if the request is made by an authenticated user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Validates that the provided userId matches the authenticated user's UID.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Combines ownership check with an existence check for updates and deletes.
+     * @param userId The UID extracted from the document path.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Verifies that a field in the document remains unchanged during an update.
+     */
+    function isUnchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Stores individual user profiles. Access restricted to the account owner.
+     * @path /users/{userId}/profile
+     * @allow (create) if auth.uid == "user_123" and path /users/user_123/profile
+     * @deny (get) if auth.uid == "user_123" but path /users/user_456/profile
+     * @principle Restricts access to a user's own data tree and validates path consistency.
+     */
+    match /users/{userId}/profile {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && isUnchanged('id');
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description User-uploaded study materials.
+     * @path /users/{userId}/study_materials/{materialId}
+     * @allow (create) if auth.uid matches userId and document contains matching userId field.
+     * @deny (update) if attempting to change the userId field.
+     * @principle Enforces document ownership and relational integrity via denormalized fields.
+     */
+    match /users/{userId}/study_materials/{materialId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingOwner(userId) && isUnchanged('userId');
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Assessments generated from study materials.
+     * @path /users/{userId}/assessments/{assessmentId}
+     */
+    match /users/{userId}/assessments/{assessmentId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingOwner(userId) && isUnchanged('userId');
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Questions belonging to an assessment.
+       * @path /users/{userId}/assessments/{assessmentId}/questions/{questionId}
+       * @principle Uses denormalized userId for authorization independence.
+       */
+      match /questions/{questionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.assessmentId == assessmentId;
+        allow update: if isExistingOwner(userId) && isUnchanged('assessmentId');
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Records of user assessment attempts.
+     * @path /users/{userId}/assessment_attempts/{attemptId}
+     */
+    match /users/{userId}/assessment_attempts/{attemptId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingOwner(userId) && isUnchanged('userId');
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Individual responses within an assessment attempt.
+       * @path /users/{userId}/assessment_attempts/{attemptId}/responses/{responseId}
+       */
+      match /responses/{responseId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userAssessmentAttemptId == attemptId;
+        allow update: if isExistingOwner(userId) && isUnchanged('userAssessmentAttemptId');
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Essays submitted for AI evaluation.
+     * @path /users/{userId}/submitted_essays/{submittedEssayId}
+     */
+    match /users/{userId}/submitted_essays/{submittedEssayId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingOwner(userId) && isUnchanged('userId');
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description AI evaluations for specific submitted essays.
+       * @path /users/{userId}/submitted_essays/{submittedEssayId}/evaluations/{evaluationId}
+       */
+      match /evaluations/{evaluationId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.submittedEssayId == submittedEssayId;
+        allow update: if isExistingOwner(userId) && isUnchanged('submittedEssayId');
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+  }
+}
