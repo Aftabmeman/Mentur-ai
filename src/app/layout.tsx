@@ -1,13 +1,31 @@
 
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/components/providers/AuthProvider"
 import { ThemeProvider } from "@/components/providers/ThemeProvider"
+import { PWALoader } from "@/components/PWALoader"
 
 export const metadata: Metadata = {
   title: 'Mentur AI | Expert Academic Mentorship',
   description: 'Elevate your learning with AI-powered assessment generation and essay evaluation.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Mentur AI',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#9333ea',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -21,10 +39,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link rel="apple-touch-icon" href="https://placehold.co/180x180/9333ea/ffffff?text=M" />
       </head>
       <body className="font-body antialiased transition-colors duration-300">
         <ThemeProvider>
           <AuthProvider>
+            <PWALoader />
             {children}
             <Toaster />
           </AuthProvider>
