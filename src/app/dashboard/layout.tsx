@@ -3,9 +3,10 @@
 
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useTheme } from "@/components/providers/ThemeProvider"
-import { Sparkles, Moon, Sun, User, Home, BookOpen, GraduationCap, FileEdit } from "lucide-react"
+import { Moon, Sun, User, Home, BookOpen, GraduationCap, FileEdit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
@@ -35,9 +36,14 @@ export default function DashboardLayout({
     <div className="flex flex-col h-screen w-full bg-background transition-colors duration-300 overflow-hidden relative">
       {/* Top Header */}
       <header className="h-16 border-b flex items-center justify-between px-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
-            <Sparkles className="h-4 w-4 text-white" />
+        <div className="flex items-center gap-3">
+          <div className="relative h-8 w-8">
+            <Image 
+              src="/logo.png" 
+              alt="Mentur Logo" 
+              fill 
+              className="object-contain"
+            />
           </div>
           <span className="text-base font-bold font-headline tracking-tight">Mentur AI</span>
         </div>

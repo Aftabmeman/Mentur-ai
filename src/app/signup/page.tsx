@@ -5,12 +5,13 @@ import { useState } from "react"
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
-import { Sparkles, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -47,8 +48,13 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950">
       <Card className="w-full max-w-md border-none shadow-xl rounded-3xl overflow-hidden bg-white dark:bg-slate-900">
         <CardHeader className="text-center pt-8">
-          <div className="bg-primary h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="text-white h-6 w-6" />
+          <div className="relative h-16 w-16 mx-auto mb-4">
+            <Image 
+              src="/logo.png" 
+              alt="Mentur Logo" 
+              fill 
+              className="object-contain"
+            />
           </div>
           <CardTitle className="text-2xl font-headline font-bold">Create Account</CardTitle>
           <CardDescription>Join Mentur AI and start your mentorship journey</CardDescription>

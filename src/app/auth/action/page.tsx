@@ -1,16 +1,17 @@
+
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { applyActionCode } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   CheckCircle2, 
   XCircle, 
   Loader2, 
-  Sparkles, 
   ArrowRight, 
   Mail, 
   ShieldCheck,
@@ -61,8 +62,13 @@ function AuthActionHandler() {
         
         <CardHeader className="text-center pt-10 pb-4">
           <div className="flex justify-center mb-6">
-            <div className="bg-primary/10 h-16 w-16 rounded-2xl flex items-center justify-center rotate-3 hover:rotate-0 transition-transform duration-300">
-              <Sparkles className="text-primary h-8 w-8" />
+            <div className="relative h-16 w-16 rotate-3 hover:rotate-0 transition-transform duration-300">
+              <Image 
+                src="/logo.png" 
+                alt="Mentur Logo" 
+                fill 
+                className="object-contain"
+              />
             </div>
           </div>
           <CardTitle className="text-3xl font-headline font-bold tracking-tight text-slate-900 dark:text-white">
@@ -78,9 +84,6 @@ function AuthActionHandler() {
             <div className="flex flex-col items-center py-12 space-y-6 animate-in fade-in zoom-in-95 duration-500">
               <div className="relative">
                 <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-8 w-8 bg-primary/10 rounded-full animate-pulse" />
-                </div>
               </div>
               <div className="text-center space-y-2">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">Verifying account...</h3>
