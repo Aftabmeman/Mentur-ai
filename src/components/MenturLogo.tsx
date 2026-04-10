@@ -44,35 +44,38 @@ export function MenturLogo({
             </filter>
           </defs>
           
-          {/* Base Brain Shape */}
-          <path 
-            d="M50 10C30 10 15 25 15 45C15 65 30 80 50 90C70 80 85 65 85 45C85 25 70 10 50 10Z" 
-            fill="url(#neural-gradient)" 
-          />
+          {/* Base Circle Background */}
+          <circle cx="50" cy="50" r="45" fill="url(#neural-gradient)" />
           
-          {/* Circuit / Brain Fold Patterns */}
+          {/* Left Brain Side (Organic) */}
           <path 
-            d="M50 25C40 25 32 33 32 43C32 53 40 61 50 61C60 61 68 53 68 43C68 33 60 25 50 25ZM50 54C44 54 39 49 39 43C39 37 44 32 50 32C56 32 61 37 61 43C61 49 56 54 50 54Z" 
+            d="M50 25C43.3726 25 38 30.3726 38 37C38 38.411 38.2435 39.765 38.6888 41.0189C34.1804 42.6393 31 46.9458 31 52C31 57.0542 34.1804 61.3607 38.6888 62.9811C38.2435 64.235 38 65.589 38 67C38 73.6274 43.3726 79 50 79V25Z" 
             fill="white" 
-            fillOpacity="0.2" 
+            fillOpacity="0.95"
           />
           
-          {/* Core Processor Node */}
-          <circle cx="50" cy="43" r="12" fill="white" filter="url(#inner-glow)" />
+          {/* Right Processor Side (Digital) */}
           <path 
-            d="M45 43H55M50 38V48" 
-            stroke="#9333ea" 
-            strokeWidth="2.5" 
+            d="M50 25V35H62M50 45V55H69M50 65V75H62" 
+            stroke="white" 
+            strokeWidth="3.5" 
             strokeLinecap="round" 
+            strokeLinejoin="round"
           />
           
-          {/* Connectivity Nodes */}
-          <circle cx="50" cy="20" r="3" fill="white" fillOpacity="0.8" />
-          <circle cx="50" cy="66" r="3" fill="white" fillOpacity="0.8" />
-          <circle cx="27" cy="43" r="3" fill="white" fillOpacity="0.8" />
-          <circle cx="73" cy="43" r="3" fill="white" fillOpacity="0.8" />
+          {/* Digital Nodes */}
+          <circle cx="62" cy="35" r="3" fill="white" />
+          <circle cx="69" cy="55" r="3" fill="white" />
+          <circle cx="62" cy="75" r="3" fill="white" />
           
-          <path d="M50 24V32M50 54V62M31 43H39M61 43H69" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.5" />
+          {/* Brain Folds / Details */}
+          <path 
+            d="M44 35C44 35 41 38 41 41M44 65C44 65 41 62 41 59" 
+            stroke="url(#neural-gradient)" 
+            strokeWidth="1.5" 
+            strokeLinecap="round" 
+            strokeOpacity="0.3"
+          />
         </svg>
       </div>
       
