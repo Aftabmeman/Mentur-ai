@@ -8,6 +8,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { MenturLogo } from "@/components/MenturLogo"
+import { NotificationManager } from "@/components/NotificationManager"
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex flex-col h-screen w-full bg-background transition-colors duration-300 overflow-hidden relative">
+      <NotificationManager />
       <header className="h-20 border-b flex items-center justify-between px-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl sticky top-0 z-50">
         <Link href="/dashboard" className="flex items-center gap-2">
           <MenturLogo size="sm" />

@@ -3,7 +3,6 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/components/providers/AuthProvider"
 import { ThemeProvider } from "@/components/providers/ThemeProvider"
-import { PWALoader } from "@/components/PWALoader"
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
@@ -40,12 +39,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="apple-touch-icon" href="https://placehold.co/180x180/9333ea/ffffff?text=M" />
+        <script dangerouslySetInnerHTML={{__html: "if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}"}} />
       </head>
       <body className="font-body antialiased transition-colors duration-300">
         <FirebaseClientProvider>
           <ThemeProvider>
             <AuthProvider>
-              <PWALoader />
               {children}
               <Toaster />
             </AuthProvider>
