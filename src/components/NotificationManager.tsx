@@ -20,7 +20,7 @@ export function NotificationManager() {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
           const token = await getToken(messaging, {
-            vapidKey: 'YOUR_PUBLIC_VAPID_KEY_HERE' // Aapko Firebase Console se VAPID key yahan dalni hogi
+            vapidKey: 'BBhVnKOPUzQ4q80N8IUvoavoXtLvKT49T6BHWJgB6wpWcOs9Lcvn8YZANtdZSUJQqF4kSZ53vpWK2cwysjtxh1I'
           });
           
           if (token) {
