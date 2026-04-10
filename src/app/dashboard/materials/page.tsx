@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -56,36 +57,36 @@ export default function MaterialsPage() {
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight text-slate-900">Study Materials</h1>
+        <h1 className="text-3xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">Study Materials</h1>
         <p className="text-muted-foreground text-lg">Ingest content to generate assessments and track progress.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-none shadow-sm">
+          <Card className="border-none shadow-sm dark:bg-slate-900/50">
             <CardHeader>
-              <CardTitle className="text-xl font-headline flex items-center gap-2">
+              <CardTitle className="text-xl font-headline flex items-center gap-2 dark:text-white">
                 <FileText className="h-5 w-5 text-primary" />
                 Add New Material
               </CardTitle>
-              <CardDescription>Upload documents or paste text content directly.</CardDescription>
+              <CardDescription className="dark:text-slate-400">Upload documents or paste text content directly.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Document Title</label>
+                <label className="text-sm font-medium dark:text-slate-200">Document Title</label>
                 <Input 
                   placeholder="e.g. Bio-Chemistry Midterm Prep" 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="rounded-xl h-11"
+                  className="rounded-xl h-11 dark:bg-slate-950 dark:border-slate-800 dark:text-white"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Subject Category</label>
+                  <label className="text-sm font-medium dark:text-slate-200">Subject Category</label>
                   <Select>
-                    <SelectTrigger className="rounded-xl h-11">
+                    <SelectTrigger className="rounded-xl h-11 dark:bg-slate-950 dark:border-slate-800 dark:text-white">
                       <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -98,9 +99,9 @@ export default function MaterialsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Primary Language</label>
+                  <label className="text-sm font-medium dark:text-slate-200">Primary Language</label>
                   <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="rounded-xl h-11">
+                    <SelectTrigger className="rounded-xl h-11 dark:bg-slate-950 dark:border-slate-800 dark:text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -120,17 +121,17 @@ export default function MaterialsPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Paste Content</label>
+                <label className="text-sm font-medium dark:text-slate-200">Paste Content</label>
                 <Textarea 
                   placeholder="Paste study material text here..." 
-                  className="min-h-[250px] rounded-xl resize-none p-4"
+                  className="min-h-[250px] rounded-xl resize-none p-4 dark:bg-slate-950 dark:border-slate-800 dark:text-white"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                 />
               </div>
 
               <div className="pt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-slate-400">
                   <Upload className="h-4 w-4" />
                   <span>Or upload PDF, PPT, Images</span>
                 </div>
@@ -146,21 +147,21 @@ export default function MaterialsPage() {
         </div>
 
         <div className="space-y-6">
-          <Card className="border-none shadow-sm bg-accent/5 overflow-hidden">
-            <CardHeader className="bg-accent/10 border-b border-accent/20">
-              <CardTitle className="text-lg font-headline flex items-center gap-2">
+          <Card className="border-none shadow-sm bg-accent/5 overflow-hidden dark:bg-slate-900/50">
+            <CardHeader className="bg-accent/10 border-b border-accent/20 dark:bg-slate-800/50">
+              <CardTitle className="text-lg font-headline flex items-center gap-2 dark:text-white">
                 <FileCheck className="h-5 w-5 text-accent" />
                 Recent Library
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {materials.length > 0 ? (
-                <div className="divide-y divide-accent/10">
+                <div className="divide-y divide-accent/10 dark:divide-slate-800">
                   {materials.map((m, i) => (
-                    <div key={i} className="p-5 group hover:bg-white/50 transition-colors">
+                    <div key={i} className="p-5 group hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                          <h4 className="font-semibold text-slate-900 line-clamp-1">{m.title}</h4>
+                          <h4 className="font-semibold text-slate-900 dark:text-white line-clamp-1">{m.title}</h4>
                           <p className="text-xs text-muted-foreground flex items-center gap-2">
                             <Clock className="h-3 w-3" /> {m.date}
                           </p>
@@ -174,11 +175,11 @@ export default function MaterialsPage() {
                 </div>
               ) : (
                 <div className="p-12 text-center flex flex-col items-center justify-center">
-                  <Inbox className="h-8 w-8 text-slate-300 mb-2" />
-                  <p className="text-sm text-slate-500 font-medium">Library is empty.</p>
+                  <Inbox className="h-8 w-8 text-slate-300 dark:text-slate-700 mb-2" />
+                  <p className="text-sm text-slate-500 font-medium dark:text-slate-400">Library is empty.</p>
                 </div>
               )}
-              <div className="p-4 bg-accent/5 text-center">
+              <div className="p-4 bg-accent/5 text-center dark:bg-slate-800/20">
                 <Button variant="link" className="text-accent font-semibold text-sm">
                   Browse Full Library
                 </Button>
