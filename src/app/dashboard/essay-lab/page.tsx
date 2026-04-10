@@ -94,23 +94,23 @@ export default function EssayLabPage() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">Essay Lab</h1>
-        <p className="text-muted-foreground text-lg">Native AI evaluation for critical writing.</p>
+        <p className="text-muted-foreground text-lg dark:text-slate-400">Native AI evaluation for critical writing.</p>
       </div>
 
       {!result ? (
         <div className="space-y-6">
           <Card className="border-none shadow-sm rounded-[32px] dark:bg-slate-900/50">
             <CardHeader className="px-8 pt-8">
-              <CardTitle className="font-headline text-xl dark:text-white">Draft Assessment</CardTitle>
+              <CardTitle className="font-headline text-xl text-slate-900 dark:text-white">Draft Assessment</CardTitle>
             </CardHeader>
             <CardContent className="px-8 pb-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Subject Topic</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Subject Topic</label>
                   <Input placeholder="e.g. Modern Philosophy" value={topic} onChange={(e) => setTopic(e.target.value)} className="rounded-2xl h-12 dark:bg-slate-950 dark:border-slate-800 dark:text-white" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Target Level</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Target Level</label>
                   <Select value={academicLevel} onValueChange={setAcademicLevel}>
                     <SelectTrigger className="rounded-2xl h-12 dark:bg-slate-950 dark:border-slate-800 dark:text-white">
                       <SelectValue />
