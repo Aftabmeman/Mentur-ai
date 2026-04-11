@@ -1,23 +1,51 @@
 {
-  "name": "Mentur AI",
-  "short_name": "Mentur",
-  "description": "Expert Academic Mentorship System",
+  "id": "com.menturai.app",
+  "name": "Mentur AI | Expert Academic Mentorship",
+  "short_name": "Mentur AI",
+  "description": "Elevate your learning with AI-powered assessment generation and essay evaluation.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#9333ea",
+  "categories": ["education", "productivity"],
   "icons": [
     {
       "src": "/icons/192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Practice",
+      "url": "/dashboard/assessments",
+      "description": "Go straight to your AI assessments"
+    },
+    {
+      "name": "Essay Lab",
+      "url": "/dashboard/essay-lab",
+      "description": "Analyze your writing"
     }
   ]
 }
