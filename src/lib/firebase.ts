@@ -1,9 +1,17 @@
-import { initializeFirebase } from "@/firebase";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { firebaseConfig } from "@/firebase/config";
 
 /**
  * Single source of truth for Firebase services.
- * This ensures we don't have multiple 'DEFAULT' app instances.
+ * Ensures only one instance of the Firebase app is initialized.
  */
-const { auth, firestore, firebaseApp } = initializeFirebase();
+const firebaseApp = getApps().length === 0 
+  ? initializeApp(firebaseConfig) 
+  : getApp();
+
+const auth = getAuth(firebaseApp);
+const firestore = getFirestore(firebaseApp);
 
 export { auth, firestore, firebaseApp };
