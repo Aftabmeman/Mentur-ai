@@ -188,7 +188,7 @@ export default function AssessmentsPage() {
     
     try {
       const attemptsRef = collection(db, "users", user.uid, "assessment_attempts")
-      await addDoc(attemptsRef, {
+      addDoc(attemptsRef, {
         userId: user.uid,
         assessmentId: "gen-" + Date.now(),
         attemptDate: new Date().toISOString(),
