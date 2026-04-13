@@ -95,8 +95,9 @@ export default function AssessmentsPage() {
       })
       setResult(assessments)
       toast({ title: "Journey Built", description: "AI has finished researching your material." })
-    } catch (error) {
-      toast({ title: "Generation Failed", variant: "destructive" })
+    } catch (error: any) {
+      console.error("Generation client-side error:", error);
+      toast({ title: "Generation Failed", description: error.message || "Something went wrong.", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }

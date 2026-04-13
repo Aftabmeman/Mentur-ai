@@ -26,7 +26,10 @@ export type EvaluateEssayFeedbackOutput = z.infer<typeof EvaluateEssayFeedbackOu
 
 export async function evaluateEssayFeedback(input: EvaluateEssayFeedbackInput): Promise<EvaluateEssayFeedbackOutput> {
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error("GROQ_API_KEY is not set.");
+  if (!apiKey) {
+    console.error("GROQ_API_KEY is missing from environment variables.");
+    throw new Error("GROQ_API_KEY is not set.");
+  }
 
   const systemPrompt = `You are an elite academic mentor at Mentur AI. 
 Evaluate this essay based on the '${input.academicLevel}' research logic:
@@ -55,31 +58,43 @@ Evaluation Schema:
   "modelAnswerOutline": ["string"]
 }`;
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'llama-3.1-70b-versatile',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-    }),
-  });
-
-  if (!response.ok) throw new Error(`Groq API Error: ${response.statusText}`);
-
-  const data = await response.json();
-  const content = data.choices[0].message.content;
-
   try {
-    return EvaluateEssayFeedbackOutputSchema.parse(JSON.parse(content));
-  } catch (e) {
-    throw new Error("Invalid mentorship data generated.");
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Groq API Error Response:", response.status, errorText);
+      throw new Error(`Groq API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    try {
+      const parsedContent = JSON.parse(content);
+      return EvaluateEssayFeedbackOutputSchema.parse(parsedContent);
+    } catch (parseError: any) {
+      console.error("JSON Parsing/Validation Failed:", parseError);
+      console.error("Raw content received from Groq:", content);
+      throw new Error(`Invalid mentorship data structure: ${parseError.message}`);
+    }
+  } catch (error: any) {
+    console.error("Flow Execution Failed:", error);
+    throw error;
   }
 }

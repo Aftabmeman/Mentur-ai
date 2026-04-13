@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef } from "react"
@@ -98,8 +97,9 @@ export default function EssayLabPage() {
         wordLimit
       })
       setResult(evaluation)
-    } catch (error) {
-      toast({ title: "Evaluation failed", variant: "destructive" })
+    } catch (error: any) {
+      console.error("Evaluation client-side error:", error);
+      toast({ title: "Evaluation failed", description: error.message || "Something went wrong.", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
