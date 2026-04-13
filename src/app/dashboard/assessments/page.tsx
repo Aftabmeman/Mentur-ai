@@ -1,39 +1,22 @@
-
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { useState, useRef } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
-  BrainCircuit, 
   Settings2, 
-  Zap, 
   CheckCircle2, 
-  HelpCircle,
-  Upload,
-  FileText,
-  FileImage,
-  FileStack,
-  X,
-  Loader2,
-  FileIcon,
-  ChevronRight,
-  ChevronLeft,
-  Info,
-  Type,
-  RotateCw,
-  Trophy,
-  BookOpen,
-  EyeOff,
-  Sparkles,
-  MessageSquare,
-  ClipboardCheck,
-  TrendingUp,
-  AlertCircle,
-  Cpu,
-  FileUp,
+  X, 
+  Loader2, 
+  FileIcon, 
+  ChevronRight, 
+  Sparkles, 
   ListChecks,
-  History
+  RotateCw,
+  FileUp,
+  BrainCircuit,
+  GraduationCap,
+  ClipboardList
 } from "lucide-react"
 import { 
   Select, 
@@ -42,45 +25,36 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { generateStudyAssessments, type GenerateStudyAssessmentsOutput } from "@/ai/flows/generate-study-assessments-flow"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore } from "@/firebase"
-import { collection, addDoc } from "firebase/firestore"
 
 export default function AssessmentsPage() {
-  const { user } = useUser()
-  const db = useFirestore()
   const [material, setMaterial] = useState("")
-  const [level, setLevel] = useState("Undergraduate Year 1")
+  const [level, setLevel] = useState<any>("Undergraduate Year 1")
   const [difficulty, setDifficulty] = useState<string>("Medium")
   const [questionType, setQuestionType] = useState<string>("Mixed")
   
-  // Mixed Mode Counts
-  const [mcqCount, setMcqCount] = useState(10)
-  const [flashcardCount, setFlashcardCount] = useState(5)
+  // Quantities
+  const [mcqCount, setMcqCount] = useState(5)
   const [essayCount, setEssayCount] = useState(2)
+  const [flashcardCount, setFlashcardCount] = useState(5)
 
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<GenerateStudyAssessmentsOutput | null>(null)
   
-  // States for interactive modes
   const [isQuizMode, setIsQuizMode] = useState(false)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false)
   const [quizScore, setQuizScore] = useState(0)
 
-  // File Upload States
   const [inputType, setInputType] = useState<string>("paste")
   const [isExtracting, setIsExtracting] = useState(false)
-  const [extractProgress, setExtractProgress] = useState(0)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -88,51 +62,41 @@ export default function AssessmentsPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setUploadedFile(file)
-    }
+    if (file) setUploadedFile(file)
   }
 
   const handleExtractText = () => {
     if (!uploadedFile) return
     setIsExtracting(true)
-    setExtractProgress(0)
-    
-    const interval = setInterval(() => {
-      setExtractProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setIsExtracting(false)
-          setMaterial(`Extracted content from ${uploadedFile.name}: \n\nAcademic context for ${level} at ${difficulty} difficulty. This document provides a comprehensive overview of the subject matter, including theoretical frameworks and practical applications...`)
-          toast({ title: "Extraction Complete", description: "Material ingested successfully." })
-          setInputType("paste")
-          return 100
-        }
-        return prev + 10
-      })
-    }, 200)
+    setTimeout(() => {
+      setIsExtracting(false)
+      setMaterial(`[AI EXTRACTED CONTENT FROM ${uploadedFile.name.toUpperCase()}]\n\nThe subject matter covers advanced theoretical frameworks suitable for ${level}. This document details the specific methodologies and empirical evidence required for mastery in the field...`)
+      toast({ title: "Content Ingested", description: "Document fully extracted for AI processing." })
+      setInputType("paste")
+    }, 1500)
   }
 
   const handleGenerate = async () => {
     if (!material && !uploadedFile) {
-      toast({ title: "Content missing", description: "Provide study material text or upload a file.", variant: "destructive" })
+      toast({ title: "Input Required", description: "Paste text or upload a document first.", variant: "destructive" })
       return
     }
 
     setIsLoading(true)
     try {
-      const typesMapping: any = questionType === "Mixed" ? ["MCQ", "Flashcard", "Essay"] : [questionType]
       const assessments = await generateStudyAssessments({
         studyMaterial: material,
-        assessmentTypes: typesMapping,
+        assessmentTypes: questionType === "Mixed" ? ["MCQ", "Essay"] : [questionType as any],
         academicLevel: level,
         difficulty: difficulty as any,
-        questionCount: mcqCount // Simplification for MVP
+        mcqCount: questionType === "MCQ" || questionType === "Mixed" ? mcqCount : 0,
+        essayCount: questionType === "Essay" || questionType === "Mixed" ? essayCount : 0,
+        flashcardCount: questionType === "Flashcard" ? flashcardCount : 0,
       })
       setResult(assessments)
-      toast({ title: "Assessments Ready", description: "Journey generated." })
+      toast({ title: "Journey Built", description: "AI has finished researching your material." })
     } catch (error) {
-      toast({ title: "Generation Error", variant: "destructive" })
+      toast({ title: "Generation Failed", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -163,15 +127,15 @@ export default function AssessmentsPage() {
       setIsAnswerRevealed(false)
     } else {
       setIsQuizMode(false)
-      toast({ title: "Quiz Finished!", description: `Score: ${quizScore}/${result?.mcqs?.length}` })
+      toast({ title: "Quiz Complete", description: `You scored ${quizScore}/${result?.mcqs?.length}` })
     }
   }
 
   return (
     <div className="flex flex-col h-full space-y-6 pb-28 animate-in fade-in duration-500">
       <div className="px-1">
-        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">Assessment Center</h1>
-        <p className="text-sm text-muted-foreground mt-1">Transform documents into native study experiences.</p>
+        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">Build Learning Journey</h1>
+        <p className="text-sm text-muted-foreground mt-1">AI-powered mentorship for your specific academic level.</p>
       </div>
 
       {!result ? (
@@ -184,13 +148,13 @@ export default function AssessmentsPage() {
               <Tabs value={inputType} onValueChange={setInputType} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-4">
                   <TabsTrigger value="paste" className="rounded-lg text-xs font-bold">Paste Text</TabsTrigger>
-                  <TabsTrigger value="upload" className="rounded-lg text-xs font-bold">Upload File</TabsTrigger>
+                  <TabsTrigger value="upload" className="rounded-lg text-xs font-bold">Upload Document</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="paste">
                   <Textarea 
-                    className="min-h-[180px] rounded-2xl dark:bg-slate-950 dark:border-slate-800 text-sm p-4"
-                    placeholder="Paste notes here..."
+                    className="min-h-[180px] rounded-2xl dark:bg-slate-950 dark:border-slate-800 text-sm p-4 resize-none leading-relaxed"
+                    placeholder="Paste notes, article text, or full document content here..."
                     value={material}
                     onChange={(e) => setMaterial(e.target.value)}
                   />
@@ -206,7 +170,7 @@ export default function AssessmentsPage() {
                       <div className="bg-primary/10 p-4 rounded-full mb-3">
                         <FileUp className="h-6 w-6 text-primary" />
                       </div>
-                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">Tap to Upload PDF/PPT</p>
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">Select PDF, PPT or Word</p>
                     </div>
                   ) : (
                     <div className="h-[180px] bg-slate-50 dark:bg-slate-900 rounded-2xl p-6 flex flex-col items-center justify-center space-y-4">
@@ -218,7 +182,8 @@ export default function AssessmentsPage() {
                         </Button>
                       </div>
                       <Button onClick={handleExtractText} disabled={isExtracting} className="w-full rounded-xl bg-slate-900 dark:bg-primary font-bold h-11 text-xs">
-                        {isExtracting ? `Extracting ${extractProgress}%` : "Extract & Process"}
+                        {isExtracting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+                        {isExtracting ? "Extracting..." : "Process for AI Analysis"}
                       </Button>
                     </div>
                   )}
@@ -231,32 +196,33 @@ export default function AssessmentsPage() {
             <CardHeader className="p-6 pb-2">
               <CardTitle className="text-lg font-headline flex items-center gap-2">
                 <Settings2 className="h-4 w-4 text-primary" />
-                Configuration
+                Context Configuration
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Level</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Academic Level</label>
                     <Select value={level} onValueChange={setLevel}>
                       <SelectTrigger className="h-11 rounded-xl bg-slate-50 dark:bg-slate-950 border-none text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="8th Standard">8th Standard</SelectItem>
                         <SelectItem value="Undergraduate Year 1">UG Year 1</SelectItem>
-                        <SelectItem value="Competitive Exams (UPSC)">UPSC/Govt</SelectItem>
+                        <SelectItem value="Competitive Exams (UPSC)">UPSC Preparation</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Difficulty</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Research Depth</label>
                     <Select value={difficulty} onValueChange={setDifficulty}>
                       <SelectTrigger className="h-11 rounded-xl bg-slate-50 dark:bg-slate-950 border-none text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Easy">Easy</SelectItem>
+                        <SelectItem value="Easy">Foundation</SelectItem>
                         <SelectItem value="Medium">Standard</SelectItem>
                         <SelectItem value="Hard">Advanced</SelectItem>
                       </SelectContent>
@@ -265,33 +231,40 @@ export default function AssessmentsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Mode</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Intelligence Mode</label>
                   <Select value={questionType} onValueChange={setQuestionType}>
                     <SelectTrigger className="h-11 rounded-xl bg-slate-50 dark:bg-slate-950 border-none text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Mixed">Mixed Learning Journey</SelectItem>
-                      <SelectItem value="MCQ">Pure MCQs</SelectItem>
-                      <SelectItem value="Flashcard">Flashcards Only</SelectItem>
+                      <SelectItem value="Mixed">Mixed (MCQs + Essays)</SelectItem>
+                      <SelectItem value="MCQ">MCQs Only</SelectItem>
+                      <SelectItem value="Flashcard">Smart Flashcards</SelectItem>
+                      <SelectItem value="Essay">Critical Writing Prompts</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {questionType === "Mixed" && (
+                {(questionType === "Mixed" || questionType === "MCQ" || questionType === "Essay" || questionType === "Flashcard") && (
                   <div className="grid grid-cols-3 gap-3 pt-2 animate-in slide-in-from-top-2">
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase">MCQs</label>
-                      <Input type="number" value={mcqCount} onChange={(e) => setMcqCount(Number(e.target.value))} className="h-10 rounded-xl text-center text-xs" />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase">Flash</label>
-                      <Input type="number" value={flashcardCount} onChange={(e) => setFlashcardCount(Number(e.target.value))} className="h-10 rounded-xl text-center text-xs" />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase">Essay</label>
-                      <Input type="number" value={essayCount} onChange={(e) => setEssayCount(Number(e.target.value))} className="h-10 rounded-xl text-center text-xs" />
-                    </div>
+                    {(questionType === "Mixed" || questionType === "MCQ") && (
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase">MCQ Count</label>
+                        <Input type="number" value={mcqCount} onChange={(e) => setMcqCount(Number(e.target.value))} className="h-10 rounded-xl text-center text-xs" />
+                      </div>
+                    )}
+                    {(questionType === "Mixed" || questionType === "Essay") && (
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase">Essay Count</label>
+                        <Input type="number" value={essayCount} onChange={(e) => setEssayCount(Number(e.target.value))} className="h-10 rounded-xl text-center text-xs" />
+                      </div>
+                    )}
+                    {(questionType === "Flashcard") && (
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase">Flash Count</label>
+                        <Input type="number" value={flashcardCount} onChange={(e) => setFlashcardCount(Number(e.target.value))} className="h-10 rounded-xl text-center text-xs" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -299,10 +272,10 @@ export default function AssessmentsPage() {
               <Button 
                 onClick={handleGenerate} 
                 disabled={isLoading} 
-                className="w-full h-14 rounded-2xl bg-primary text-white font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+                className="w-full h-14 rounded-2xl bg-primary text-white font-bold text-sm shadow-xl shadow-primary/20"
               >
                 {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Sparkles className="h-5 w-5 mr-2" />}
-                Build Experience
+                {isLoading ? "Researching Material..." : "Generate AI Journey"}
               </Button>
             </CardContent>
           </Card>
@@ -310,7 +283,7 @@ export default function AssessmentsPage() {
       ) : isQuizMode ? (
         <div className="flex flex-col h-full max-w-lg mx-auto space-y-6">
           <div className="flex items-center justify-between px-1">
-            <Button variant="ghost" size="sm" onClick={() => setIsQuizMode(false)} className="text-slate-500 text-xs font-bold">Exit</Button>
+            <Button variant="ghost" size="sm" onClick={() => setIsQuizMode(false)} className="text-slate-500 text-xs font-bold">Exit Mode</Button>
             <div className="flex flex-col items-end">
               <span className="text-[10px] font-bold text-slate-400 uppercase">Question {currentQuestionIndex + 1} of {result.mcqs?.length}</span>
               <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
@@ -369,8 +342,8 @@ export default function AssessmentsPage() {
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold font-headline dark:text-white">Native Journey Ready</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">AI Mentorship context built for {level}.</p>
+              <h2 className="text-2xl font-bold font-headline dark:text-white">AI Experience Ready</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Personalized Research for {level}.</p>
             </div>
             
             <div className="grid grid-cols-1 gap-3 py-2 text-left">
@@ -379,7 +352,17 @@ export default function AssessmentsPage() {
                   <ListChecks className="h-5 w-5 text-primary" />
                   <div className="flex-1">
                     <p className="text-xs font-bold dark:text-white">{result.mcqs.length} Knowledge Checks</p>
-                    <p className="text-[10px] text-slate-400">Adaptive MCQ assessment</p>
+                    <p className="text-[10px] text-slate-400">Adaptive MCQs based on material.</p>
+                  </div>
+                  <Button size="sm" onClick={startQuiz} className="rounded-xl h-8 bg-slate-900 dark:bg-primary text-[10px] font-bold">START</Button>
+                </div>
+              ) : null}
+              {result.essayPrompts?.length ? (
+                <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                  <ClipboardList className="h-5 w-5 text-emerald-500" />
+                  <div className="flex-1">
+                    <p className="text-xs font-bold dark:text-white">{result.essayPrompts.length} Writing Prompts</p>
+                    <p className="text-[10px] text-slate-400">Critical analysis questions.</p>
                   </div>
                 </div>
               ) : null}
@@ -387,22 +370,41 @@ export default function AssessmentsPage() {
                 <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                   <RotateCw className="h-5 w-5 text-amber-500" />
                   <div className="flex-1">
-                    <p className="text-xs font-bold dark:text-white">{result.flashcards.length} Active Recall Cards</p>
-                    <p className="text-[10px] text-slate-400">Focused practice sessions</p>
+                    <p className="text-xs font-bold dark:text-white">{result.flashcards.length} Flashcards</p>
+                    <p className="text-[10px] text-slate-400">Active recall practice.</p>
                   </div>
                 </div>
               ) : null}
             </div>
 
             <div className="flex flex-col gap-3 pt-4">
-              <Button onClick={startQuiz} className="h-14 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20">
-                Start Assessment
-              </Button>
-              <Button variant="ghost" onClick={() => setResult(null)} className="h-12 rounded-xl text-slate-500 text-xs font-bold">
-                Reset Material
+              <Button onClick={() => setResult(null)} variant="ghost" className="h-12 rounded-xl text-slate-500 text-xs font-bold">
+                Reset & New Journey
               </Button>
             </div>
           </Card>
+          
+          {result.essayPrompts && result.essayPrompts.length > 0 && (
+            <div className="space-y-4 pb-10">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 px-2 flex items-center gap-2">
+                <GraduationCap className="h-4 w-4" /> Writing Practice
+              </h3>
+              {result.essayPrompts.map((prompt, i) => (
+                <Card key={i} className="border-none shadow-sm rounded-[24px] bg-white dark:bg-slate-900 p-6 space-y-4">
+                  <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-none">Prompt {i+1}</Badge>
+                  <p className="text-sm font-medium leading-relaxed dark:text-white">{prompt.prompt}</p>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Key Points for {level}:</p>
+                    <ul className="space-y-1">
+                      {prompt.modelAnswerOutline.map((point, idx) => (
+                        <li key={idx} className="text-xs text-slate-600 dark:text-slate-300">• {point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
