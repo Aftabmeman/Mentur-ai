@@ -1,8 +1,7 @@
-
 'use server';
 /**
  * @fileOverview High-performance academic assessment generator using Groq API.
- * Model: llama-3.1-8b-instant for fast and reliable educational content generation.
+ * Strictly source-based generation for specified educational levels.
  */
 
 import { z } from 'zod';
@@ -52,37 +51,32 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
   const apiKey = process.env.GROQ_API_KEY;
   
   if (!apiKey) {
-    console.error("GROQ_API_KEY is missing in environment variables.");
+    console.error("GROQ_API_KEY is missing.");
     return { error: "Configuration Error: AI Key is not set." };
   }
 
-  if (!input.studyMaterial.trim()) {
-    return { error: "Study material content is empty. Please provide text for research." };
-  }
+  const systemPrompt = `You are an expert Educational Content Developer for Mentur AI.
+STRICT ADHERENCE RULE: You must ONLY use the provided 'Study Material' to generate questions. Do NOT use outside knowledge or facts not present in the text.
+TARGET LEVEL: ${input.academicLevel}
+DIFFICULTY: ${input.difficulty}
 
-  const systemPrompt = `You are the Lead Educational Researcher for Mentur AI.
-Strictly follow these rules:
-1. FULL CONTENT EXTRACTION: Analyze the provided study material deeply.
-2. ACADEMIC STANDARDS: Match the '${input.academicLevel}' academic level exactly. 
-3. OUTPUT FORMAT: Return ONLY a valid JSON object. No extra text or preamble.
-4. REQUIRED QUANTITIES:
-   - MCQs: ${input.mcqCount}
-   - Essay Prompts: ${input.essayCount}
-   - Flashcards: ${input.flashcardCount}`;
+Deliverables:
+1. MCQs: ${input.mcqCount}
+2. Essay Prompts: ${input.essayCount}
+3. Flashcards: ${input.flashcardCount}
 
-  const userPrompt = `Generate educational material based on the following source:
+Output format: STRICT JSON.`;
+
+  const userPrompt = `Generate educational content strictly from this material:
 """
 ${input.studyMaterial}
 """
 
-Target Level: ${input.academicLevel}
-Difficulty: ${input.difficulty}
-
-Generate strictly in this JSON structure:
+Return a JSON object:
 {
-  "mcqs": [{"question": "string", "options": ["string"], "correctAnswer": "string", "explanation": "string"}],
-  "flashcards": [{"front": "string", "back": "string"}],
-  "essayPrompts": [{"prompt": "string", "evaluationCriteria": ["string"], "modelAnswerOutline": ["string" ]}]
+  "mcqs": [{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswer": "...", "explanation": "..."}],
+  "flashcards": [{"front": "...", "back": "..."}],
+  "essayPrompts": [{"prompt": "...", "evaluationCriteria": ["..."], "modelAnswerOutline": ["..." ]}]
 }`;
 
   try {
@@ -99,28 +93,17 @@ Generate strictly in this JSON structure:
           { role: 'user', content: userPrompt }
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.5,
+        temperature: 0.3,
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Groq API Error Details: Status ${response.status} - ${errorText}`);
-      return { error: `AI Research Engine encountered an error (${response.status}).` };
-    }
+    if (!response.ok) return { error: "AI Engine connection failed." };
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
-    
-    try {
-      const parsedContent = JSON.parse(content);
-      return GenerateStudyAssessmentsOutputSchema.parse(parsedContent);
-    } catch (parseError: any) {
-      console.error("JSON Parsing Error:", content);
-      return { error: "AI Research Engine returned an invalid response format." };
-    }
+    const content = JSON.parse(data.choices[0].message.content);
+    return GenerateStudyAssessmentsOutputSchema.parse(content);
   } catch (error: any) {
-    console.error("Fetch Exception:", error.message);
-    return { error: error.message || "A network error occurred during generation." };
+    console.error("Generation Error:", error);
+    return { error: "Failed to generate assessments." };
   }
 }

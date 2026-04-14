@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef } from "react"
@@ -21,7 +20,9 @@ import {
   ChevronRight,
   GraduationCap,
   BookOpen,
-  SendHorizontal
+  SendHorizontal,
+  Eye,
+  FileText
 } from "lucide-react"
 import { 
   Select, 
@@ -46,8 +47,8 @@ export default function WritingWizardPage() {
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
   
   const [isLoading, setIsLoading] = useState(false)
-  const [isProcessingImages, setIsProcessingImages] = useState(false)
   const [result, setResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
+  const [showModelAnswer, setShowModelAnswer] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
@@ -73,7 +74,7 @@ export default function WritingWizardPage() {
       const evaluation = await evaluateEssayFeedback({
         topic: chapterName || "General Practice",
         question: question,
-        essayText: essayText || "[Handwritten Answer Analyzed]",
+        essayText: essayText || "[Handwritten Answer Uploaded]",
         academicLevel: academicLevel as any,
       })
       if (evaluation.error) {
@@ -199,7 +200,7 @@ export default function WritingWizardPage() {
                 </div>
                 Step 3: Submit Answer
               </CardTitle>
-              <CardDescription>Upload handwritten photos or type your response.</CardDescription>
+              <CardDescription>Upload handwritten photos (Limit 5) or type your response.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 pt-0 space-y-6">
               <div 
@@ -208,7 +209,7 @@ export default function WritingWizardPage() {
               >
                 <input type="file" className="hidden" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" multiple />
                 <PlusCircle className="h-8 w-8 text-primary mb-2" />
-                <p className="text-xs font-bold text-slate-500">Add Handwritten Pages (Limit 5)</p>
+                <p className="text-xs font-bold text-slate-500">Add Handwritten Pages</p>
               </div>
 
               {uploadedImages.length > 0 && (
@@ -257,7 +258,7 @@ export default function WritingWizardPage() {
                 <Sparkles className="h-10 w-10 text-primary" />
               </div>
               <CardTitle className="text-2xl font-headline">Ready for Analysis?</CardTitle>
-              <CardDescription>Mentur AI Professor will now evaluate your answer based on {academicLevel} standards.</CardDescription>
+              <CardDescription>Mentur AI Professor will now evaluate structure, grammar, and content.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 pt-0 space-y-6">
               <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-3xl space-y-3">
@@ -284,63 +285,78 @@ export default function WritingWizardPage() {
                 className="w-full h-16 rounded-3xl bg-slate-900 dark:bg-primary text-white font-black text-lg shadow-2xl shadow-primary/30"
               >
                 {isLoading ? <Loader2 className="h-6 w-6 animate-spin mr-3" /> : <SendHorizontal className="h-6 w-6 mr-3" />}
-                {isLoading ? "Consulting AI..." : "Analyze Now"}
-              </Button>
-              <Button variant="ghost" onClick={() => setStep(3)} className="w-full h-12 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                Go back & edit
+                {isLoading ? "Analyzing..." : "Analyze Now"}
               </Button>
             </CardContent>
           </Card>
         )}
 
         {step === 5 && result && (
-          <div className="animate-in slide-in-from-bottom-8 duration-700 space-y-6 pb-10">
+          <div className="animate-in slide-in-from-bottom-8 duration-700 space-y-6 pb-20">
             <Card className="border-none shadow-2xl rounded-[40px] p-10 text-center bg-white dark:bg-slate-900 space-y-8">
               <div className="space-y-1">
                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mastery Score</p>
                  <h2 className="text-7xl font-black font-headline text-slate-900 dark:text-white">{result.score}<span className="text-2xl text-slate-300">/10</span></h2>
                  <Badge className="bg-emerald-500 text-white border-none px-4 py-1 mt-2">+5 Coins Earned</Badge>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-4 text-left">
-                 <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-3xl p-6 space-y-3">
-                    <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" /> Key Strengths
-                    </h4>
-                    <ul className="space-y-2">
-                      {result.strengths?.map((s, i) => (
-                        <li key={i} className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-medium">• {s}</li>
-                      ))}
-                    </ul>
-                 </div>
-                 <div className="bg-amber-50 dark:bg-amber-900/10 rounded-3xl p-6 space-y-3">
-                    <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4" /> Areas for Growth
-                    </h4>
-                    <ul className="space-y-2">
-                      {result.improvementSuggestions?.map((s, i) => (
-                        <li key={i} className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-medium">• {s}</li>
-                      ))}
-                    </ul>
-                 </div>
+                {[
+                  { title: "Introduction", content: result.feedbackBySection.introduction, color: "text-blue-500", bg: "bg-blue-50" },
+                  { title: "Main Body", content: result.feedbackBySection.mainBody, color: "text-primary", bg: "bg-primary/5" },
+                  { title: "Conclusion", content: result.feedbackBySection.conclusion, color: "text-emerald-500", bg: "bg-emerald-50" },
+                  { title: "Grammar & Vocab", content: result.feedbackBySection.grammarAndVocabulary, color: "text-amber-500", bg: "bg-amber-50" }
+                ].map((sec, i) => (
+                  <div key={i} className={cn("p-6 rounded-3xl border border-slate-100 dark:border-slate-800", sec.bg)}>
+                    <h4 className={cn("text-[10px] font-black uppercase tracking-widest mb-2", sec.color)}>{sec.title}</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">{sec.content}</p>
+                  </div>
+                ))}
               </div>
 
-              <Button onClick={() => {setResult(null); setStep(1); setUploadedImages([]); setEssayText(""); setQuestion("")}} className="w-full h-16 rounded-3xl bg-slate-900 dark:bg-primary font-black text-lg">
-                Practice New Topic
-              </Button>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => {setResult(null); setStep(1)}} className="flex-1 h-14 rounded-2xl font-bold">New Practice</Button>
+                <Button 
+                  onClick={() => setShowModelAnswer(!showModelAnswer)} 
+                  className="flex-1 h-14 rounded-2xl bg-slate-900 dark:bg-primary font-bold gap-2"
+                >
+                  <Eye className="h-5 w-5" />
+                  {showModelAnswer ? "Hide Model Answer" : "See Model Answer"}
+                </Button>
+              </div>
             </Card>
 
-            <Card className="border-none shadow-xl rounded-[32px] p-8 space-y-6 dark:bg-slate-900">
-               <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Model Answer Outline</h3>
-               <div className="space-y-4">
-                 {result.modelAnswerOutline?.map((point, i) => (
-                   <div key={i} className="flex gap-4 items-start p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                     <span className="h-6 w-6 rounded-lg bg-white dark:bg-slate-950 flex items-center justify-center text-[10px] font-black shrink-0">{i+1}</span>
-                     <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{point}</p>
-                   </div>
-                 ))}
-               </div>
-            </Card>
+            {showModelAnswer && (
+              <Card className="border-none shadow-2xl rounded-[32px] p-10 space-y-8 bg-slate-900 text-white animate-in zoom-in-95 duration-500">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Professor's Rewrite</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">A perfectly formatted version of your answer</p>
+                  </div>
+                </div>
+                
+                <div className="prose prose-invert prose-sm max-w-none">
+                  <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-wrap italic">
+                    {result.suggestedRewrite}
+                  </p>
+                </div>
+                
+                <div className="pt-6 border-t border-white/10 space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Critical Structural Points:</h4>
+                  <ul className="grid grid-cols-1 gap-3">
+                    {result.modelAnswerOutline.map((point, i) => (
+                      <li key={i} className="flex gap-3 items-start text-xs font-medium">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Card>
+            )}
           </div>
         )}
       </div>

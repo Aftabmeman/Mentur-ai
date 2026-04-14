@@ -1,8 +1,7 @@
 'use server';
 /**
- * @fileOverview Advanced AI Essay Evaluator using Groq API.
- * Model: llama-3.1-70b-versatile for high-quality academic mentorship.
- * Ensures strict JSON output and sanitized payload for Groq.
+ * @fileOverview Advanced AI Professor for Essay Evaluation.
+ * Analyzes structure (Intro, Body, Conclusion), Grammar, and provides a full rewrite.
  */
 
 import { z } from 'zod';
@@ -10,18 +9,23 @@ import { z } from 'zod';
 const EvaluateEssayFeedbackInputSchema = z.object({
   essayText: z.string().min(1, "Essay content cannot be empty"),
   topic: z.string(),
-  academicLevel: z.enum(['High School', 'College', 'Graduate', 'Other', 'School Class 8-10', 'School Class 11-12', 'Undergraduate Year 1', 'Undergraduate Year 2', 'Undergraduate Year 3', 'Competitive Exams (UPSC)', 'Competitive Exams (JEE/NEET)', 'Competitive Exams (CAT/CLAT/SSC/NDA)']),
-  wordLimit: z.string().optional(),
+  academicLevel: z.string(),
   question: z.string().optional(),
 });
 export type EvaluateEssayFeedbackInput = z.infer<typeof EvaluateEssayFeedbackInputSchema>;
 
 const EvaluateEssayFeedbackOutputSchema = z.object({
-  score: z.number().int().min(0).max(10).optional(),
-  strengths: z.array(z.string()).optional(),
-  weaknesses: z.array(z.string()).optional(),
-  improvementSuggestions: z.array(z.string()).optional(),
-  modelAnswerOutline: z.array(z.string()).optional(),
+  score: z.number().int().min(0).max(10),
+  feedbackBySection: z.object({
+    introduction: z.string(),
+    mainBody: z.string(),
+    conclusion: z.string(),
+    grammarAndVocabulary: z.string(),
+  }),
+  strengths: z.array(z.string()),
+  weaknesses: z.array(z.string()),
+  suggestedRewrite: z.string().describe("A perfectly rewritten version of the student's essay."),
+  modelAnswerOutline: z.array(z.string()),
   error: z.string().optional(),
 });
 export type EvaluateEssayFeedbackOutput = z.infer<typeof EvaluateEssayFeedbackOutputSchema>;
@@ -29,36 +33,35 @@ export type EvaluateEssayFeedbackOutput = z.infer<typeof EvaluateEssayFeedbackOu
 export async function evaluateEssayFeedback(input: EvaluateEssayFeedbackInput): Promise<EvaluateEssayFeedbackOutput> {
   const apiKey = process.env.GROQ_API_KEY;
   
-  if (!apiKey) {
-    console.error("GROQ_API_KEY is missing in environment variables.");
-    return { error: "Configuration Error: AI Key is not set." };
-  }
+  if (!apiKey) return { error: "AI Key is missing.", score: 0, feedbackBySection: { introduction: "", mainBody: "", conclusion: "", grammarAndVocabulary: "" }, strengths: [], weaknesses: [], suggestedRewrite: "", modelAnswerOutline: [] };
 
-  if (!input.essayText.trim()) {
-    return { error: "Essay content is empty. Please provide text for evaluation." };
-  }
+  const systemPrompt = `You are a Senior Professor at Mentur AI. 
+Evaluate the essay for the '${input.academicLevel}' level.
+CRITERIA: Evaluate Introduction, Main Body, Conclusion, and Grammar separately.
+TASK: Provide a comprehensive score out of 10 and a FULL suggested rewrite that would earn a perfect score.
+Return ONLY valid JSON.`;
 
-  const systemPrompt = `You are an elite academic mentor at Mentur AI.
-Evaluate strictly for the '${input.academicLevel}' level.
-Return ONLY a valid JSON object. No extra text or preamble.`;
+  const userPrompt = `Topic: ${input.topic}
+${input.question ? `Question/Prompt: ${input.question}` : ''}
 
-  const userPrompt = `Essay Evaluation Task:
-- Level: ${input.academicLevel}
-- Topic: ${input.topic}
-${input.question ? `- Specific Prompt: ${input.question}` : ''}
-
-Essay Text:
+Student's Essay:
 """
 ${input.essayText}
 """
 
-Output JSON Schema:
+JSON Schema required:
 {
-  "score": number (0-10),
-  "strengths": ["string"],
-  "weaknesses": ["string"],
-  "improvementSuggestions": ["string"],
-  "modelAnswerOutline": ["string"]
+  "score": number,
+  "feedbackBySection": {
+    "introduction": "...",
+    "mainBody": "...",
+    "conclusion": "...",
+    "grammarAndVocabulary": "..."
+  },
+  "strengths": ["..."],
+  "weaknesses": ["..."],
+  "suggestedRewrite": "...",
+  "modelAnswerOutline": ["..."]
 }`;
 
   try {
@@ -75,28 +78,17 @@ Output JSON Schema:
           { role: 'user', content: userPrompt }
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.3,
+        temperature: 0.2,
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Groq Evaluation API Error: Status ${response.status} - ${errorText}`);
-      return { error: `AI Evaluator encountered an error (${response.status}).` };
-    }
+    if (!response.ok) throw new Error("API Failure");
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
-
-    try {
-      const parsedContent = JSON.parse(content);
-      return EvaluateEssayFeedbackOutputSchema.parse(parsedContent);
-    } catch (parseError: any) {
-      console.error("JSON Parsing Error in Evaluation:", content);
-      return { error: "AI Evaluator returned an invalid response format." };
-    }
+    const parsed = JSON.parse(data.choices[0].message.content);
+    return EvaluateEssayFeedbackOutputSchema.parse(parsed);
   } catch (error: any) {
-    console.error("Fetch Exception in Evaluation:", error.message);
-    return { error: error.message || "An unexpected error occurred during evaluation." };
+    console.error("Evaluation Error:", error);
+    return { error: "Failed to evaluate essay.", score: 0, feedbackBySection: { introduction: "", mainBody: "", conclusion: "", grammarAndVocabulary: "" }, strengths: [], weaknesses: [], suggestedRewrite: "", modelAnswerOutline: [] };
   }
 }
