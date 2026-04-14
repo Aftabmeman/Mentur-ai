@@ -5,7 +5,7 @@ import { firebaseConfig } from "@/firebase/config";
 
 /**
  * Single source of truth for Firebase services.
- * Ensures only one instance of the Firebase app is initialized.
+ * Ensures only one instance of the Firebase app is initialized using a singleton pattern.
  */
 const firebaseApp = getApps().length === 0 
   ? initializeApp(firebaseConfig) 

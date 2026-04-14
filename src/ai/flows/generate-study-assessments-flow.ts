@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 
-// Increase timeout for long-running AI generations on Vercel
+// Increase timeout for long-running AI generations
 export const maxDuration = 30;
 
 const MCQSchema = z.object({
@@ -51,7 +51,7 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
   
   if (!apiKey) {
     console.error("GROQ_API_KEY is missing in environment variables.");
-    return { error: "Configuration Error: GROQ_API_KEY is not set." };
+    return { error: "Configuration Error: AI Key is not set." };
   }
 
   if (!input.studyMaterial.trim()) {
@@ -62,7 +62,7 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
 Strictly follow these rules:
 1. FULL CONTENT EXTRACTION: Analyze the material deeply.
 2. ACADEMIC STANDARDS: Match the '${input.academicLevel}' level exactly.
-3. OUTPUT FORMAT: Return ONLY a valid JSON object. Do not include any text before or after the JSON.
+3. OUTPUT FORMAT: Return ONLY a valid JSON object. No extra text.
 4. REQUIRED QUANTITIES:
    - MCQs: ${input.mcqCount}
    - Essay Prompts: ${input.essayCount}

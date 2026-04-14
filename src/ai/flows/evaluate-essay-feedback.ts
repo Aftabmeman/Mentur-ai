@@ -33,7 +33,7 @@ export async function evaluateEssayFeedback(input: EvaluateEssayFeedbackInput): 
   
   if (!apiKey) {
     console.error("GROQ_API_KEY is missing in environment variables.");
-    return { error: "Configuration Error: GROQ_API_KEY is not set." };
+    return { error: "Configuration Error: AI Key is not set." };
   }
 
   if (!input.essayText.trim()) {
