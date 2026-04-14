@@ -10,29 +10,33 @@ export function NotificationManager() {
 
   useEffect(() => {
     const setupMessaging = async () => {
-      // Check if window is available and if messaging is supported in the current environment
-      if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+      // Basic environment checks
+      if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('Notification' in window)) {
+        return;
+      }
 
       try {
         const supported = await isSupported();
-        if (!supported) {
-          console.warn('Firebase Messaging is not supported in this browser.');
-          return;
-        }
+        if (!supported) return;
 
         const { firebaseApp } = initializeFirebase();
         const messaging = getMessaging(firebaseApp);
 
-        // Request permission
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
+        // Many mobile browsers block permission requests unless triggered by a click.
+        // We check current permission first to avoid unnecessary prompts that might cause errors.
+        if (Notification.permission === 'default') {
+          // We don't force prompt on mount to avoid browser-level 'annoyance' blocks
+          // A better pattern is to have a 'Enable Notifications' button in settings.
+          return; 
+        }
+
+        if (Notification.permission === 'granted') {
           const token = await getToken(messaging, {
             vapidKey: 'BBhVnKOPUzQ4q80N8IUvoavoXtLvKT49T6BHWJgB6wpWcOs9Lcvn8YZANtdZSUJQqF4kSZ53vpWK2cwysjtxh1I'
           });
           
           if (token) {
-            console.log('FCM Token generated');
-            // Logic to save token to user profile would go here
+            // Token is available, user is already opted in.
           }
         }
 
@@ -45,8 +49,8 @@ export function NotificationManager() {
         });
 
       } catch (error) {
-        // Silent catch to prevent app-wide crash if FCM fails
-        console.warn('FCM setup failed silently:', error);
+        // Silent catch for notification-related issues
+        console.warn('FCM setup bypassed:', error);
       }
     };
 

@@ -37,7 +37,10 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
  */
 export function incrementUserStats(db: Firestore, userId: string, coins: number) {
   const profileRef = doc(db, 'users', userId, 'profile', userId); 
+  // IMPORTANT: We include 'id: userId' to satisfy the 'create' security rule
+  // which requires request.resource.data.id == userId
   setDoc(profileRef, {
+    id: userId,
     totalCoins: increment(coins),
     assessmentsDone: increment(1),
     updatedAt: new Date().toISOString()
