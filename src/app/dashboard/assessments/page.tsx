@@ -33,6 +33,8 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 
+export const maxDuration = 30;
+
 export default function AssessmentsPage() {
   const [material, setMaterial] = useState("")
   const [level, setLevel] = useState<any>("Undergraduate Year 1")
@@ -402,7 +404,7 @@ export default function AssessmentsPage() {
                   <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-2">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Key Points for {level}:</p>
                     <ul className="space-y-1">
-                      {prompt.modelAnswerOutline.map((point, idx) => (
+                      {prompt.modelAnswerOutline?.map((point, idx) => (
                         <li key={idx} className="text-xs text-slate-600 dark:text-slate-300">• {point}</li>
                       ))}
                     </ul>

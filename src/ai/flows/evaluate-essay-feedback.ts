@@ -6,9 +6,6 @@
 
 import { z } from 'zod';
 
-// Increase timeout for complex evaluations
-export const maxDuration = 30;
-
 const EvaluateEssayFeedbackInputSchema = z.object({
   essayText: z.string().min(1, "Essay content cannot be empty"),
   topic: z.string(),

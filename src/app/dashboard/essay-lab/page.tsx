@@ -36,6 +36,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
+export const maxDuration = 30;
+
 export default function EssayLabPage() {
   const [topic, setTopic] = useState("")
   const [question, setQuestion] = useState("")
@@ -219,7 +221,7 @@ export default function EssayLabPage() {
                     <CheckCircle2 className="h-3 w-3" /> Key Strengths
                   </h4>
                   <ul className="space-y-1.5">
-                    {result.strengths.slice(0, 3).map((s, i) => (
+                    {result.strengths?.slice(0, 3).map((s, i) => (
                       <li key={i} className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">• {s}</li>
                     ))}
                   </ul>
@@ -229,7 +231,7 @@ export default function EssayLabPage() {
                     <Lightbulb className="h-3 w-3" /> Mentur Advice
                   </h4>
                   <ul className="space-y-1.5">
-                    {result.improvementSuggestions.slice(0, 2).map((s, i) => (
+                    {result.improvementSuggestions?.slice(0, 2).map((s, i) => (
                       <li key={i} className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">• {s}</li>
                     ))}
                   </ul>

@@ -6,9 +6,6 @@
 
 import { z } from 'zod';
 
-// Increase timeout for long-running AI generations
-export const maxDuration = 30;
-
 const MCQSchema = z.object({
   question: z.string(),
   options: z.array(z.string()),
