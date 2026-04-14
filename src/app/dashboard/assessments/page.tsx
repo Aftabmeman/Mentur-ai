@@ -33,6 +33,10 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 
+/**
+ * Configure max duration for the AI generation flow in the page segment
+ * for compatibility with Next.js 15 'use server' constraints.
+ */
 export const maxDuration = 30;
 
 export default function AssessmentsPage() {
@@ -79,7 +83,7 @@ export default function AssessmentsPage() {
   }
 
   const handleGenerate = async () => {
-    if (!material && !uploadedFile) {
+    if (!material.trim() && !uploadedFile) {
       toast({ title: "Input Required", description: "Paste text or upload a document first.", variant: "destructive" })
       return
     }

@@ -2,6 +2,7 @@
 /**
  * @fileOverview Advanced AI Essay Evaluator using Groq API.
  * Model: llama-3.1-70b-versatile for high-quality academic mentorship.
+ * Ensures strict JSON output and sanitized payload for Groq.
  */
 
 import { z } from 'zod';
@@ -34,12 +35,12 @@ export async function evaluateEssayFeedback(input: EvaluateEssayFeedbackInput): 
   }
 
   if (!input.essayText.trim()) {
-    return { error: "Essay content is empty." };
+    return { error: "Essay content is empty. Please provide text for evaluation." };
   }
 
   const systemPrompt = `You are an elite academic mentor at Mentur AI.
 Evaluate strictly for the '${input.academicLevel}' level.
-Return ONLY a valid JSON object. No extra text.`;
+Return ONLY a valid JSON object. No extra text or preamble.`;
 
   const userPrompt = `Essay Evaluation Task:
 - Level: ${input.academicLevel}

@@ -36,6 +36,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
+/**
+ * Configure max duration for the AI evaluation flow in the page segment
+ * for compatibility with Next.js 15 'use server' constraints.
+ */
 export const maxDuration = 30;
 
 export default function EssayLabPage() {
@@ -85,8 +89,8 @@ export default function EssayLabPage() {
   }
 
   const handleEvaluate = async () => {
-    if (!topic || !essayText) {
-      toast({ title: "Topic and content required", variant: "destructive" })
+    if (!topic || !essayText.trim()) {
+      toast({ title: "Input Required", description: "Topic and content are required.", variant: "destructive" })
       return
     }
     setIsLoading(true)
@@ -98,7 +102,12 @@ export default function EssayLabPage() {
         academicLevel: academicLevel as any,
         wordLimit
       })
-      setResult(evaluation)
+      if (evaluation.error) {
+        toast({ title: "Evaluation Failed", description: evaluation.error, variant: "destructive" });
+      } else {
+        setResult(evaluation)
+        toast({ title: "Analysis Complete", description: "Your essay has been evaluated by AI." })
+      }
     } catch (error: any) {
       console.error("Evaluation client-side error:", error);
       toast({ title: "Evaluation failed", description: error.message || "Something went wrong.", variant: "destructive" })

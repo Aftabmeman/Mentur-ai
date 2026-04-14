@@ -2,6 +2,7 @@
 /**
  * @fileOverview High-performance academic assessment generator using Groq API.
  * Model: llama-3.1-8b-instant for fast and reliable educational content generation.
+ * Ensures strict JSON output and sanitized payload for Groq.
  */
 
 import { z } from 'zod';
@@ -52,14 +53,14 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
   }
 
   if (!input.studyMaterial.trim()) {
-    return { error: "No content provided for research." };
+    return { error: "Study material content is empty. Please provide text for research." };
   }
 
   const systemPrompt = `You are the Lead Educational Researcher for Mentur AI.
 Strictly follow these rules:
 1. FULL CONTENT EXTRACTION: Analyze the material deeply.
 2. ACADEMIC STANDARDS: Match the '${input.academicLevel}' level exactly.
-3. OUTPUT FORMAT: Return ONLY a valid JSON object. No extra text.
+3. OUTPUT FORMAT: Return ONLY a valid JSON object. No extra text or preamble.
 4. REQUIRED QUANTITIES:
    - MCQs: ${input.mcqCount}
    - Essay Prompts: ${input.essayCount}
