@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview High-performance academic assessment generator using Groq API.
- * Models: mixtral-8x7b-32768 for deep content extraction and research.
+ * Model: llama-3.1-8b-instant for fast and reliable educational content generation.
  */
 
 import { z } from 'zod';
@@ -28,7 +28,7 @@ const EssayPromptSchema = z.object({
 });
 
 const GenerateStudyAssessmentsInputSchema = z.object({
-  studyMaterial: z.string(),
+  studyMaterial: z.string().min(1, "Study material cannot be empty"),
   assessmentTypes: z.array(z.enum(['MCQ', 'Flashcard', 'Essay', 'Mixed'])),
   academicLevel: z.enum(['8th Standard', 'Undergraduate Year 1', 'Competitive Exams (UPSC)', 'Competitive Exams (JEE/NEET)', 'Competitive Exams (CAT/CLAT/SSC/NDA)']),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']),
@@ -50,37 +50,37 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
   const apiKey = process.env.GROQ_API_KEY;
   
   if (!apiKey) {
-    return { error: "GROQ_API_KEY is not configured in environment variables." };
+    console.error("GROQ_API_KEY is missing in environment variables.");
+    return { error: "Configuration Error: GROQ_API_KEY is not set." };
+  }
+
+  if (!input.studyMaterial.trim()) {
+    return { error: "No content provided for research." };
   }
 
   const systemPrompt = `You are the Lead Educational Researcher for Mentur AI.
-Your workflow involves 4 critical steps:
-1. FULL CONTENT EXTRACTION: Analyze every line of the provided material.
-2. CONTEXTUAL RESEARCH: Apply strict educational standards for the '${input.academicLevel}' level.
-   - 8th Standard: Focus on factual recall, basic concepts, and descriptive clarity.
-   - Undergraduate: Focus on analytical thinking, conceptual application, and critical arguments.
-   - UPSC: Focus on multi-dimensional analysis, ethical reasoning, and current relevance.
-3. TAILORED CONTENT GENERATION: Create high-stakes questions based on this research.
-4. JSON OUTPUT: Return only a valid JSON object.
+Strictly follow these rules:
+1. FULL CONTENT EXTRACTION: Analyze the material deeply.
+2. ACADEMIC STANDARDS: Match the '${input.academicLevel}' level exactly.
+3. OUTPUT FORMAT: Return ONLY a valid JSON object. Do not include any text before or after the JSON.
+4. REQUIRED QUANTITIES:
+   - MCQs: ${input.mcqCount}
+   - Essay Prompts: ${input.essayCount}
+   - Flashcards: ${input.flashcardCount}`;
 
-REQUIRED QUANTITIES:
-- MCQs: ${input.mcqCount}
-- Essays: ${input.essayCount}
-- Flashcards: ${input.flashcardCount}`;
-
-  const userPrompt = `Input Material:
+  const userPrompt = `Material:
 """
 ${input.studyMaterial}
 """
 
-Academic Target: ${input.academicLevel}
+Target Level: ${input.academicLevel}
 Difficulty: ${input.difficulty}
 
-Generate the assessment now following the strict JSON format:
+Generate strictly in this JSON structure:
 {
   "mcqs": [{"question": "string", "options": ["string"], "correctAnswer": "string", "explanation": "string"}],
   "flashcards": [{"front": "string", "back": "string"}],
-  "essayPrompts": [{"prompt": "string", "evaluationCriteria": ["string"], "modelAnswerOutline": ["string"]}]
+  "essayPrompts": [{"prompt": "string", "evaluationCriteria": ["string"], "modelAnswerOutline": ["string" ]}]
 }`;
 
   try {
@@ -91,7 +91,7 @@ Generate the assessment now following the strict JSON format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'mixtral-8x7b-32768',
+        model: 'llama-3.1-8b-instant',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -103,7 +103,8 @@ Generate the assessment now following the strict JSON format:
 
     if (!response.ok) {
       const errorText = await response.text();
-      return { error: `Groq API Error (${response.status}): ${errorText.substring(0, 100)}` };
+      console.error(`Groq API Error Details: Status ${response.status} - ${errorText}`);
+      return { error: `AI Research Engine encountered an error (${response.status}).` };
     }
 
     const data = await response.json();
@@ -113,9 +114,11 @@ Generate the assessment now following the strict JSON format:
       const parsedContent = JSON.parse(content);
       return GenerateStudyAssessmentsOutputSchema.parse(parsedContent);
     } catch (parseError: any) {
-      return { error: "Failed to parse AI response. Please try again." };
+      console.error("JSON Parsing Error:", content);
+      return { error: "AI Research Engine returned an invalid response format." };
     }
   } catch (error: any) {
-    return { error: error.message || "An unexpected error occurred during generation." };
+    console.error("Fetch Exception:", error.message);
+    return { error: error.message || "A network error occurred during generation." };
   }
 }

@@ -1,16 +1,16 @@
 'use server';
 /**
  * @fileOverview Advanced AI Essay Evaluator using Groq API.
- * Model: llama-3.1-70b-versatile for nuanced academic mentorship.
+ * Model: llama-3.1-70b-versatile for high-quality academic mentorship.
  */
 
 import { z } from 'zod';
 
-// Increase timeout for Vercel
+// Increase timeout for complex evaluations
 export const maxDuration = 30;
 
 const EvaluateEssayFeedbackInputSchema = z.object({
-  essayText: z.string(),
+  essayText: z.string().min(1, "Essay content cannot be empty"),
   topic: z.string(),
   academicLevel: z.enum(['High School', 'College', 'Graduate', 'Other', 'School Class 8-10', 'School Class 11-12', 'Undergraduate Year 1', 'Undergraduate Year 2', 'Undergraduate Year 3', 'Competitive Exams (UPSC)', 'Competitive Exams (JEE/NEET)', 'Competitive Exams (CAT/CLAT/SSC/NDA)']),
   wordLimit: z.string().optional(),
@@ -32,28 +32,29 @@ export async function evaluateEssayFeedback(input: EvaluateEssayFeedbackInput): 
   const apiKey = process.env.GROQ_API_KEY;
   
   if (!apiKey) {
-    return { error: "GROQ_API_KEY is not configured." };
+    console.error("GROQ_API_KEY is missing in environment variables.");
+    return { error: "Configuration Error: GROQ_API_KEY is not set." };
   }
 
-  const systemPrompt = `You are an elite academic mentor at Mentur AI. 
-Evaluate this essay based on the '${input.academicLevel}' research logic:
-- High School/8th Std: Focus on structure, grammar, and factual accuracy.
-- University/College: Focus on critical analysis, theory, and evidence-based arguments.
-- UPSC: Focus on multi-dimensional perspectives, ethical depth, and clarity of thought.
+  if (!input.essayText.trim()) {
+    return { error: "Essay content is empty." };
+  }
 
-Strictly return a JSON object.`;
+  const systemPrompt = `You are an elite academic mentor at Mentur AI.
+Evaluate strictly for the '${input.academicLevel}' level.
+Return ONLY a valid JSON object. No extra text.`;
 
-  const userPrompt = `Context:
+  const userPrompt = `Essay Evaluation Task:
 - Level: ${input.academicLevel}
 - Topic: ${input.topic}
-${input.question ? `- Prompt: ${input.question}` : ''}
+${input.question ? `- Specific Prompt: ${input.question}` : ''}
 
-Student Essay:
+Essay Text:
 """
 ${input.essayText}
 """
 
-Evaluation Schema:
+Output JSON Schema:
 {
   "score": number (0-10),
   "strengths": ["string"],
@@ -82,7 +83,8 @@ Evaluation Schema:
 
     if (!response.ok) {
       const errorText = await response.text();
-      return { error: `Groq API Error (${response.status}): ${errorText.substring(0, 100)}` };
+      console.error(`Groq Evaluation API Error: Status ${response.status} - ${errorText}`);
+      return { error: `AI Evaluator encountered an error (${response.status}).` };
     }
 
     const data = await response.json();
@@ -92,9 +94,11 @@ Evaluation Schema:
       const parsedContent = JSON.parse(content);
       return EvaluateEssayFeedbackOutputSchema.parse(parsedContent);
     } catch (parseError: any) {
-      return { error: "Failed to parse AI feedback." };
+      console.error("JSON Parsing Error in Evaluation:", content);
+      return { error: "AI Evaluator returned an invalid response format." };
     }
   } catch (error: any) {
+    console.error("Fetch Exception in Evaluation:", error.message);
     return { error: error.message || "An unexpected error occurred during evaluation." };
   }
 }
