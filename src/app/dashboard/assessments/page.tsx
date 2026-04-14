@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
@@ -16,11 +17,8 @@ import {
   BrainCircuit,
   GraduationCap,
   ClipboardList,
-  ChevronLeft,
   BookOpen,
-  ArrowRight,
   PartyPopper,
-  Zap,
   Info,
   Award,
   BookMarked,
@@ -54,8 +52,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { useUser, useFirestore } from "@/firebase"
-import { incrementUserStats } from "@/firebase/non-blocking-updates"
 
 export const maxDuration = 60;
 
@@ -66,8 +62,6 @@ const academicLevels = [
 ];
 
 export default function AssessmentsPage() {
-  const { user } = useUser()
-  const db = useFirestore()
   const { toast } = useToast()
   
   const [wizardStep, setWizardStep] = useState(1)
@@ -96,9 +90,6 @@ export default function AssessmentsPage() {
   const [masteredCount, setMasteredCount] = useState(0)
   const [reviewCount, setReviewCount] = useState(0)
 
-  // Track recorded coin sessions to prevent double counting
-  const sessionRecorded = useRef<Set<string>>(new Set());
-
   const [essayText, setEssayText] = useState("")
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
   const [isAnalyzingEssay, setIsAnalyzingEssay] = useState(false)
@@ -125,13 +116,6 @@ export default function AssessmentsPage() {
     if (!activeMode) return;
     const currentMode = activeMode;
     
-    // Increment Coins logic with safety check for user and db
-    if (user && db && !sessionRecorded.current.has(currentMode)) {
-      incrementUserStats(db, user.uid, 10);
-      sessionRecorded.current.add(currentMode);
-      toast({ title: "+10 Gold Coins!", description: "Session complete reward added." });
-    }
-
     setCompletedModes(prev => [...new Set([...prev, currentMode])])
     setActiveMode(null)
 
@@ -606,7 +590,7 @@ export default function AssessmentsPage() {
               <ChevronRight className="ml-2 h-6 w-6" />
             </Button>
             
-            <Button variant="ghost" onClick={() => { setResult(null); setCompletedModes([]); sessionRecorded.current.clear(); }} className="text-[10px] font-black uppercase tracking-widest text-slate-400">Build New Journey</Button>
+            <Button variant="ghost" onClick={() => { setResult(null); setCompletedModes([]); }} className="text-[10px] font-black uppercase tracking-widest text-slate-400">Build New Journey</Button>
           </Card>
         </div>
       )}

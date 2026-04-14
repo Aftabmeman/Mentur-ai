@@ -1,6 +1,9 @@
+
 "use client"
 
 import { useState, useRef } from "react"
+import { useAuth } from "@/components/providers/AuthProvider"
+import { useTheme } from "@/components/providers/ThemeProvider"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,10 +19,7 @@ import {
   GraduationCap, 
   BookOpen, 
   SendHorizontal, 
-  Eye,
-  Award,
-  BookMarked,
-  Info,
+  Award, 
   CheckCircle2
 } from "lucide-react"
 import { 
@@ -35,8 +35,6 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import confetti from 'canvas-confetti'
-import { useUser, useFirestore } from "@/firebase"
-import { incrementUserStats } from "@/firebase/non-blocking-updates"
 
 export const maxDuration = 60;
 
@@ -47,8 +45,8 @@ const academicLevels = [
 ];
 
 export default function WritingWizardPage() {
-  const { user } = useUser()
-  const db = useFirestore()
+  const { user } = useAuth()
+  const { theme } = useTheme()
   const { toast } = useToast()
 
   const [step, setStep] = useState(1)
@@ -99,13 +97,6 @@ export default function WritingWizardPage() {
       } else {
         setResult(evaluation)
         setStep(5)
-        
-        // Reward coins for analyzed answer
-        if (user) {
-          incrementUserStats(db, user.uid, 10);
-          toast({ title: "+10 Gold Coins!", description: "Writing analysis reward added." });
-        }
-
         playSuccessSound()
         confetti({ particleCount: 200, spread: 90, origin: { y: 0.7 } })
       }
