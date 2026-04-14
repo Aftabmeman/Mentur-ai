@@ -90,43 +90,43 @@ export default function DashboardPage() {
   }, [user, db])
 
   const statsConfig = [
-    { label: "Overall Score", value: `${stats.avgScore}%`, icon: Target, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Gold Coins", value: stats.coins.toString(), icon: Coins, color: "text-amber-500", bg: "bg-amber-100" },
-    { label: "Tests Done", value: stats.assessmentsDone.toString(), icon: Trophy, color: "text-blue-500", bg: "bg-blue-50" },
-    { label: "Mastery Level", value: `Lvl ${stats.masteryLevel}`, icon: Zap, color: "text-emerald-500", bg: "bg-emerald-50" },
+    { label: "Overall", value: `${stats.avgScore}%`, icon: Target, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Coins", value: stats.coins.toString(), icon: Coins, color: "text-amber-500", bg: "bg-amber-100" },
+    { label: "Done", value: stats.assessmentsDone.toString(), icon: Trophy, color: "text-blue-500", bg: "bg-blue-50" },
+    { label: "Level", value: `Lvl ${stats.masteryLevel}`, icon: Zap, color: "text-emerald-500", bg: "bg-emerald-50" },
   ]
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white font-headline">Welcome back, Scholar</h1>
-        <p className="text-muted-foreground text-lg">Your academic journey is looking bright today.</p>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-1.5 px-1">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-headline">Welcome, Scholar</h1>
+        <p className="text-muted-foreground text-sm font-medium">Your academic journey is looking bright today.</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {loading ? (
           Array(4).fill(0).map((_, i) => (
-            <Card key={i} className="border-none shadow-sm rounded-[24px]">
-              <CardContent className="p-5 space-y-3">
+            <Card key={i} className="border-none shadow-sm rounded-3xl bg-white dark:bg-slate-900/50">
+              <CardContent className="p-4 space-y-3">
                 <Skeleton className="h-10 w-10 rounded-2xl" />
                 <div className="space-y-2">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-6 w-10" />
+                  <Skeleton className="h-2 w-12" />
+                  <Skeleton className="h-5 w-8" />
                 </div>
               </CardContent>
             </Card>
           ))
         ) : (
           statsConfig.map((stat) => (
-            <Card key={stat.label} className="border-none shadow-sm rounded-[24px] hover:shadow-md transition-shadow group dark:bg-slate-900/50">
-              <CardContent className="p-5">
+            <Card key={stat.label} className="border-none shadow-sm rounded-3xl hover:shadow-md transition-shadow group dark:bg-slate-900/50 bg-white">
+              <CardContent className="p-4">
                 <div className="flex flex-col gap-3">
-                  <div className={stat.bg + " p-3 rounded-2xl w-fit group-hover:scale-110 transition-transform"}>
+                  <div className={stat.bg + " p-2.5 rounded-2xl w-fit group-hover:scale-110 transition-transform"}>
                     <stat.icon className={"h-5 w-5 " + stat.color} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-slate-400">{stat.label}</p>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{stat.value}</h3>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-slate-400 mb-0.5">{stat.label}</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none">{stat.value}</h3>
                   </div>
                 </div>
               </CardContent>
@@ -136,48 +136,52 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <Card className="border-none shadow-sm rounded-[28px] overflow-hidden bg-slate-900 text-white group">
-          <CardContent className="p-8 flex flex-col justify-between min-h-[220px] relative overflow-hidden">
+        <Card className="border-none shadow-xl rounded-[32px] overflow-hidden bg-slate-950 text-white relative">
+          <CardContent className="p-8 flex flex-col justify-between min-h-[240px] relative z-10">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -mr-32 -mt-32"></div>
-            <div className="space-y-4 relative z-10">
-              <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md">
+            
+            <div className="space-y-4">
+              <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/10">
                 <BrainCircuit className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold font-headline leading-tight dark:text-white">Start Building Knowledge</h3>
-              <p className="text-slate-400 max-w-sm">Use our Self-Practice writing wizard or generate custom assessments instantly.</p>
+              <div>
+                <h3 className="text-2xl font-black font-headline leading-tight">Start Building Knowledge</h3>
+                <p className="text-slate-400 text-sm mt-2 max-w-[280px]">Practice writing or generate custom assessments instantly.</p>
+              </div>
             </div>
-            <div className="flex gap-4 mt-8 relative z-10">
-              <Button className="h-12 px-8 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-xl shadow-primary/25" asChild>
+
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <Button className="flex-1 h-12 px-6 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-primary/20" asChild>
                 <Link href="/dashboard/assessments">Create Journey</Link>
               </Button>
-              <Button variant="ghost" className="h-12 px-8 border border-white/20 text-white hover:bg-white/10 rounded-2xl font-bold bg-transparent" asChild>
+              <Button variant="ghost" className="flex-1 h-12 px-6 border border-white/20 text-white hover:bg-white/10 rounded-2xl font-bold bg-transparent" asChild>
                 <Link href="/dashboard/essay-lab">Writing Lab</Link>
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm rounded-[28px] bg-white dark:bg-slate-900/50 p-8">
-          <div className="flex items-center justify-between mb-8">
+        <Card className="border-none shadow-sm rounded-[32px] bg-white dark:bg-slate-900/50 p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-8 px-1">
             <div>
-              <h3 className="font-headline text-xl dark:text-white">Performance Trend</h3>
-              <p className="text-xs font-medium text-slate-500">Your last 10 activities</p>
+              <h3 className="font-headline font-bold text-lg dark:text-white">Performance Trend</h3>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Last 10 Activities</p>
             </div>
-            <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+            <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-800">
                <TrendingUp className="h-3 w-3 text-emerald-600" />
-               <span className="text-[10px] font-black text-emerald-600 uppercase">Improving</span>
+               <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Improving</span>
             </div>
           </div>
           
-          <div className="h-[250px] w-full">
+          <div className="h-[220px] w-full mt-2">
             <ChartContainer config={chartConfig} className="h-full w-full">
               <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" opacity={0.5} />
                 <XAxis 
                   dataKey="date" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9, fontWeight: 700 }}
                   dy={10}
                 />
                 <YAxis hide domain={[0, 100]} />
@@ -188,7 +192,7 @@ export default function DashboardPage() {
                   stroke="hsl(var(--primary))" 
                   strokeWidth={4} 
                   dot={{ r: 4, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: '#fff' }}
-                  activeDot={{ r: 6 }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
               </LineChart>
             </ChartContainer>
@@ -196,9 +200,9 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <footer className="pt-8 text-center">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
-          <Sparkles className="h-3 w-3" /> Powered by Mentur AI Engine — Fastest Generation
+      <footer className="pt-4 pb-8 text-center">
+        <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-slate-300 dark:text-slate-600 flex items-center justify-center gap-2">
+          <Sparkles className="h-3 w-3" /> Mentur AI Engine — High Performance
         </p>
       </footer>
     </div>
