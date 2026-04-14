@@ -93,11 +93,16 @@ export default function AssessmentsPage() {
         essayCount: questionType === "Essay" || questionType === "Mixed" ? essayCount : 0,
         flashcardCount: questionType === "Flashcard" ? flashcardCount : 0,
       })
-      setResult(assessments)
-      toast({ title: "Journey Built", description: "AI has finished researching your material." })
+      
+      if (assessments.error) {
+        toast({ title: "Generation Failed", description: assessments.error, variant: "destructive" });
+      } else {
+        setResult(assessments)
+        toast({ title: "Journey Built", description: "AI has finished researching your material." })
+      }
     } catch (error: any) {
       console.error("Generation client-side error:", error);
-      toast({ title: "Generation Failed", description: error.message || "Something went wrong.", variant: "destructive" })
+      toast({ title: "Generation Failed", description: "A system error occurred. Please check your connection.", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }

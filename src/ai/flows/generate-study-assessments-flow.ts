@@ -6,6 +6,9 @@
 
 import { z } from 'zod';
 
+// Increase timeout for long-running AI generations on Vercel
+export const maxDuration = 30;
+
 const MCQSchema = z.object({
   question: z.string(),
   options: z.array(z.string()),
@@ -39,14 +42,15 @@ const GenerateStudyAssessmentsOutputSchema = z.object({
   mcqs: z.array(MCQSchema).optional(),
   flashcards: z.array(FlashcardSchema).optional(),
   essayPrompts: z.array(EssayPromptSchema).optional(),
+  error: z.string().optional(),
 });
 export type GenerateStudyAssessmentsOutput = z.infer<typeof GenerateStudyAssessmentsOutputSchema>;
 
 export async function generateStudyAssessments(input: GenerateStudyAssessmentsInput): Promise<GenerateStudyAssessmentsOutput> {
   const apiKey = process.env.GROQ_API_KEY;
+  
   if (!apiKey) {
-    console.error("GROQ_API_KEY is missing from environment variables.");
-    throw new Error("GROQ_API_KEY is not set.");
+    return { error: "GROQ_API_KEY is not configured in environment variables." };
   }
 
   const systemPrompt = `You are the Lead Educational Researcher for Mentur AI.
@@ -99,8 +103,7 @@ Generate the assessment now following the strict JSON format:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Groq API Error Response:", response.status, errorText);
-      throw new Error(`Groq API Error: ${response.statusText}`);
+      return { error: `Groq API Error (${response.status}): ${errorText.substring(0, 100)}` };
     }
 
     const data = await response.json();
@@ -110,12 +113,9 @@ Generate the assessment now following the strict JSON format:
       const parsedContent = JSON.parse(content);
       return GenerateStudyAssessmentsOutputSchema.parse(parsedContent);
     } catch (parseError: any) {
-      console.error("JSON Parsing/Validation Failed:", parseError);
-      console.error("Raw content received from Groq:", content);
-      throw new Error(`Invalid educational data structure: ${parseError.message}`);
+      return { error: "Failed to parse AI response. Please try again." };
     }
   } catch (error: any) {
-    console.error("Flow Execution Failed:", error);
-    throw error;
+    return { error: error.message || "An unexpected error occurred during generation." };
   }
 }

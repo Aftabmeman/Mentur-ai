@@ -6,6 +6,9 @@
 
 import { z } from 'zod';
 
+// Increase timeout for Vercel
+export const maxDuration = 30;
+
 const EvaluateEssayFeedbackInputSchema = z.object({
   essayText: z.string(),
   topic: z.string(),
@@ -16,19 +19,20 @@ const EvaluateEssayFeedbackInputSchema = z.object({
 export type EvaluateEssayFeedbackInput = z.infer<typeof EvaluateEssayFeedbackInputSchema>;
 
 const EvaluateEssayFeedbackOutputSchema = z.object({
-  score: z.number().int().min(0).max(10),
-  strengths: z.array(z.string()),
-  weaknesses: z.array(z.string()),
-  improvementSuggestions: z.array(z.string()),
-  modelAnswerOutline: z.array(z.string()),
+  score: z.number().int().min(0).max(10).optional(),
+  strengths: z.array(z.string()).optional(),
+  weaknesses: z.array(z.string()).optional(),
+  improvementSuggestions: z.array(z.string()).optional(),
+  modelAnswerOutline: z.array(z.string()).optional(),
+  error: z.string().optional(),
 });
 export type EvaluateEssayFeedbackOutput = z.infer<typeof EvaluateEssayFeedbackOutputSchema>;
 
 export async function evaluateEssayFeedback(input: EvaluateEssayFeedbackInput): Promise<EvaluateEssayFeedbackOutput> {
   const apiKey = process.env.GROQ_API_KEY;
+  
   if (!apiKey) {
-    console.error("GROQ_API_KEY is missing from environment variables.");
-    throw new Error("GROQ_API_KEY is not set.");
+    return { error: "GROQ_API_KEY is not configured." };
   }
 
   const systemPrompt = `You are an elite academic mentor at Mentur AI. 
@@ -78,8 +82,7 @@ Evaluation Schema:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Groq API Error Response:", response.status, errorText);
-      throw new Error(`Groq API Error: ${response.statusText}`);
+      return { error: `Groq API Error (${response.status}): ${errorText.substring(0, 100)}` };
     }
 
     const data = await response.json();
@@ -89,12 +92,9 @@ Evaluation Schema:
       const parsedContent = JSON.parse(content);
       return EvaluateEssayFeedbackOutputSchema.parse(parsedContent);
     } catch (parseError: any) {
-      console.error("JSON Parsing/Validation Failed:", parseError);
-      console.error("Raw content received from Groq:", content);
-      throw new Error(`Invalid mentorship data structure: ${parseError.message}`);
+      return { error: "Failed to parse AI feedback." };
     }
   } catch (error: any) {
-    console.error("Flow Execution Failed:", error);
-    throw error;
+    return { error: error.message || "An unexpected error occurred during evaluation." };
   }
 }
