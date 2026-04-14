@@ -1,7 +1,8 @@
+
 'use server';
 /**
  * @fileOverview High-performance academic assessment generator using Groq API.
- * Strictly source-based generation for specified educational levels.
+ * Uses llama-3.3-70b-versatile for high-accuracy source-based generation.
  */
 
 import { z } from 'zod';
@@ -55,28 +56,45 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
     return { error: "Configuration Error: AI Key is not set." };
   }
 
+  // Input Validation
+  if (input.studyMaterial.length < 500) {
+    return { error: "Could not read PDF content properly. The text extracted is too short to generate a high-quality assessment." };
+  }
+
+  // Intelligent Truncation (Max 10,000 chars to maintain context precision)
+  let material = input.studyMaterial;
+  if (material.length > 10000) {
+    console.log("Truncating input material for Groq (Length: " + material.length + ")");
+    material = material.substring(0, 10000) + "... [Truncated for Context Stability]";
+  }
+
+  // Logging Context for debugging
+  console.log("Generating assessments for level:", input.academicLevel);
+  console.log("Material snippet:", material.substring(0, 200));
+
   const systemPrompt = `You are an expert Educational Content Developer for Mentur AI.
 STRICT ADHERENCE RULE: You must ONLY use the provided 'Study Material' to generate questions. Do NOT use outside knowledge or facts not present in the text.
 TARGET LEVEL: ${input.academicLevel}
 DIFFICULTY: ${input.difficulty}
+LANGUAGE: Match the language of the source material.
 
 Deliverables:
 1. MCQs: ${input.mcqCount}
 2. Essay Prompts: ${input.essayCount}
 3. Flashcards: ${input.flashcardCount}
 
-Output format: STRICT JSON.`;
+Output format: Return ONLY valid JSON. No pre-amble, no post-amble.`;
 
   const userPrompt = `Generate educational content strictly from this material:
-"""
-${input.studyMaterial}
-"""
+\"\"\"
+${material}
+\"\"\"
 
-Return a JSON object:
+Return a JSON object following this schema:
 {
-  "mcqs": [{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswer": "...", "explanation": "..."}],
-  "flashcards": [{"front": "...", "back": "..."}],
-  "essayPrompts": [{"prompt": "...", "evaluationCriteria": ["..."], "modelAnswerOutline": ["..." ]}]
+  "mcqs": [{"question": "string", "options": ["string", "string", "string", "string"], "correctAnswer": "string", "explanation": "string"}],
+  "flashcards": [{"front": "string", "back": "string"}],
+  "essayPrompts": [{"prompt": "string", "evaluationCriteria": ["string"], "modelAnswerOutline": ["string" ]}]
 }`;
 
   try {
@@ -87,23 +105,27 @@ Return a JSON object:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.3,
+        temperature: 0.2,
       }),
     });
 
-    if (!response.ok) return { error: "AI Engine connection failed." };
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Groq API Error Details:", errorData);
+      return { error: "AI Engine connection failed: " + (errorData.error?.message || response.statusText) };
+    }
 
     const data = await response.json();
     const content = JSON.parse(data.choices[0].message.content);
     return GenerateStudyAssessmentsOutputSchema.parse(content);
   } catch (error: any) {
     console.error("Generation Error:", error);
-    return { error: "Failed to generate assessments." };
+    return { error: "Failed to generate assessments. Please ensure the PDF has readable text." };
   }
 }

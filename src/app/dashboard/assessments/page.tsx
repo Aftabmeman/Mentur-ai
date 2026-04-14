@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { generateStudyAssessments, type GenerateStudyAssessmentsOutput } from "@/ai/flows/generate-study-assessments-flow"
+import { extractTextFromPDF } from "@/app/actions/pdf-parser"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -79,20 +80,37 @@ export default function AssessmentsPage() {
     if (file) setUploadedFile(file)
   }
 
-  const handleExtractText = () => {
+  const handleExtractText = async () => {
     if (!uploadedFile) return
     setIsExtracting(true)
-    setTimeout(() => {
+    
+    try {
+      const formData = new FormData()
+      formData.append('file', uploadedFile)
+      
+      const response = await extractTextFromPDF(formData)
+      
+      if (response.error) {
+        toast({ title: "Extraction Failed", description: response.error, variant: "destructive" })
+      } else if (response.text) {
+        setMaterial(response.text)
+        toast({ title: "Resource Ingested", description: `Successfully extracted ${response.text.length} characters.` })
+        setWizardStep(2)
+      }
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to process PDF.", variant: "destructive" })
+    } finally {
       setIsExtracting(false)
-      setMaterial(`[AI EXTRACTED CONTENT FROM ${uploadedFile.name.toUpperCase()}]\n\nThe subject matter covers critical concepts and core theoretical frameworks relevant to ${level}. This detailed analysis is structured to assess your foundational understanding and critical thinking abilities...`)
-      toast({ title: "Resource Ingested", description: "Document extracted for step 2." })
-      setWizardStep(2)
-    }, 1500)
+    }
   }
 
   const handleNextToStep2 = () => {
     if (!material.trim() && !uploadedFile) {
       toast({ title: "Step 1 Required", description: "Please upload or paste your study material.", variant: "destructive" })
+      return
+    }
+    if (material.trim().length > 0 && material.trim().length < 500) {
+      toast({ title: "Content Too Short", description: "Please provide more study material (min 500 characters) for accurate generation.", variant: "destructive" })
       return
     }
     setIsAnalyzing(true)
@@ -126,7 +144,6 @@ export default function AssessmentsPage() {
           colors: ['#9333ea', '#4f46e5', '#3b82f6']
         })
         
-        // Play success sound (browser standard)
         try {
           const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3')
           audio.volume = 0.3
@@ -227,7 +244,7 @@ export default function AssessmentsPage() {
                   <TabsContent value="paste">
                     <Textarea 
                       className="min-h-[220px] rounded-2xl dark:bg-slate-950 dark:border-slate-800 text-sm p-5 resize-none leading-relaxed border-none bg-slate-50"
-                      placeholder="Paste your study materials, articles, or notes here for AI to process..."
+                      placeholder="Paste your study materials, articles, or notes here for AI to process (min 500 chars)..."
                       value={material}
                       onChange={(e) => setMaterial(e.target.value)}
                     />
@@ -239,11 +256,11 @@ export default function AssessmentsPage() {
                         onClick={() => fileInputRef.current?.click()}
                         className="h-[220px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-slate-50 transition-colors bg-slate-50/50"
                       >
-                        <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".pdf,.doc,.docx,.ppt,.pptx" />
+                        <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" />
                         <div className="bg-primary/10 p-5 rounded-full mb-4">
                           <FileUp className="h-7 w-7 text-primary" />
                         </div>
-                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest">Select PDF, PPT or Word</p>
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest">Select PDF Document</p>
                       </div>
                     ) : (
                       <div className="h-[220px] bg-slate-50 dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center space-y-6">
@@ -256,7 +273,7 @@ export default function AssessmentsPage() {
                         </div>
                         <Button onClick={handleExtractText} disabled={isExtracting} className="w-full rounded-2xl bg-slate-900 dark:bg-primary font-bold h-14 text-sm shadow-xl shadow-primary/20">
                           {isExtracting ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <Sparkles className="h-5 w-5 mr-2" />}
-                          {isExtracting ? "Extracting Content..." : "Extract for Step 2"}
+                          {isExtracting ? "Extracting Text..." : "Read PDF for Step 2"}
                         </Button>
                       </div>
                     )}
@@ -373,29 +390,26 @@ export default function AssessmentsPage() {
                   ))}
                 </div>
 
-                {/* Quantities */}
-                {(questionType === "Mixed" || questionType === "MCQ" || questionType === "Essay" || questionType === "Flashcard") && (
-                  <div className="grid grid-cols-3 gap-3 animate-in slide-in-from-top-2">
-                    {(questionType === "Mixed" || questionType === "MCQ") && (
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">MCQ Qty</label>
-                        <Input type="number" value={mcqCount} onChange={(e) => setMcqCount(Number(e.target.value))} className="h-12 rounded-xl text-center font-bold bg-slate-50 border-none" />
-                      </div>
-                    )}
-                    {(questionType === "Mixed" || questionType === "Essay") && (
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Essay Qty</label>
-                        <Input type="number" value={essayCount} onChange={(e) => setEssayCount(Number(e.target.value))} className="h-12 rounded-xl text-center font-bold bg-slate-50 border-none" />
-                      </div>
-                    )}
-                    {(questionType === "Flashcard") && (
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Flash Qty</label>
-                        <Input type="number" value={flashcardCount} onChange={(e) => setFlashcardCount(Number(e.target.value))} className="h-12 rounded-xl text-center font-bold bg-slate-50 border-none" />
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="grid grid-cols-3 gap-3 animate-in slide-in-from-top-2">
+                  {(questionType === "Mixed" || questionType === "MCQ") && (
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">MCQ Qty</label>
+                      <Input type="number" value={mcqCount} onChange={(e) => setMcqCount(Number(e.target.value))} className="h-12 rounded-xl text-center font-bold bg-slate-50 border-none" />
+                    </div>
+                  )}
+                  {(questionType === "Mixed" || questionType === "Essay") && (
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Essay Qty</label>
+                      <Input type="number" value={essayCount} onChange={(e) => setEssayCount(Number(e.target.value))} className="h-12 rounded-xl text-center font-bold bg-slate-50 border-none" />
+                    </div>
+                  )}
+                  {(questionType === "Flashcard") && (
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Flash Qty</label>
+                      <Input type="number" value={flashcardCount} onChange={(e) => setFlashcardCount(Number(e.target.value))} className="h-12 rounded-xl text-center font-bold bg-slate-50 border-none" />
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={() => setWizardStep(2)} className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-800">
