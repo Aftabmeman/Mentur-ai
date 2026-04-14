@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
@@ -23,7 +24,10 @@ import {
   Zap,
   Info,
   Award,
-  BookMarked
+  BookMarked,
+  PlusCircle,
+  Check,
+  SendHorizontal
 } from "lucide-react"
 import { 
   Select, 
@@ -43,12 +47,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { generateStudyAssessments, type GenerateStudyAssessmentsOutput } from "@/ai/flows/generate-study-assessments-flow"
+import { evaluateEssayFeedback, type EvaluateEssayFeedbackOutput } from "@/ai/flows/evaluate-essay-feedback"
 import { extractTextFromPDF } from "@/app/actions/pdf-parser"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 export const maxDuration = 60;
 
@@ -74,6 +80,7 @@ export default function AssessmentsPage() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<GenerateStudyAssessmentsOutput | null>(null)
+  const [completedModes, setCompletedModes] = useState<string[]>([])
   
   const [activeMode, setActiveMode] = useState<'MCQ' | 'Flashcard' | 'Essay' | null>(null)
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -84,16 +91,42 @@ export default function AssessmentsPage() {
   const [masteredCount, setMasteredCount] = useState(0)
   const [reviewCount, setReviewCount] = useState(0)
 
+  // Essay Submission in Journey
+  const [essayText, setEssayText] = useState("")
+  const [uploadedImages, setUploadedImages] = useState<File[]>([])
+  const [isAnalyzingEssay, setIsAnalyzingEssay] = useState(false)
+  const [essayResult, setEssayResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
+
   const [inputType, setInputType] = useState<string>("paste")
   const [isExtracting, setIsExtracting] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const essayImageInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+
+  const playSuccessSound = () => {
+    try {
+      const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3");
+      audio.volume = 0.5;
+      audio.play();
+    } catch (e) {
+      console.log("Audio play failed", e);
+    }
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) setUploadedFile(file)
+  }
+
+  const handleEssayImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (uploadedImages.length + files.length > 5) {
+      toast({ title: "Limit Exceeded", description: "Max 5 photos allowed.", variant: "destructive" })
+      return
+    }
+    setUploadedImages(prev => [...prev, ...files])
   }
 
   const handleExtractText = async () => {
@@ -104,11 +137,7 @@ export default function AssessmentsPage() {
       formData.append('file', uploadedFile)
       const response = await extractTextFromPDF(formData)
       if (response.error) {
-        toast({ 
-          title: "Scan Failed", 
-          description: "Oops! Hum ye PDF theek se nahi padh paaye. Try another one?", 
-          variant: "destructive" 
-        })
+        toast({ title: "Scan Failed", description: response.error, variant: "destructive" })
       } else if (response.text) {
         setMaterial(response.text)
         toast({ title: "Resource Ingested", description: `Successfully extracted content.` })
@@ -151,8 +180,46 @@ export default function AssessmentsPage() {
     }
   }
 
+  const handleEssayAnalysis = async () => {
+    if (!essayText.trim() && uploadedImages.length === 0) {
+      toast({ title: "Content Missing", description: "Please type or upload your work.", variant: "destructive" })
+      return
+    }
+
+    setIsAnalyzingEssay(true)
+    try {
+      // Simulation for OCR delay
+      if (uploadedImages.length > 0) await new Promise(r => setTimeout(r, 1500));
+
+      const evaluation = await evaluateEssayFeedback({
+        topic: "Journey Practice Session",
+        question: result?.essayPrompts?.[currentIdx]?.prompt || "General Essay",
+        essayText: essayText || "[Handwritten content scanned from images]",
+        academicLevel: level,
+      })
+
+      if (evaluation.error) {
+        toast({ title: "Analysis Failed", description: evaluation.error, variant: "destructive" })
+      } else {
+        setEssayResult(evaluation)
+        playSuccessSound()
+        confetti({ particleCount: 100, spread: 60, origin: { y: 0.8 } })
+      }
+    } catch (e) {
+      toast({ title: "Error", description: "Professor is busy. Try again.", variant: "destructive" })
+    } finally {
+      setIsAnalyzingEssay(false)
+    }
+  }
+
+  const startJourney = () => {
+    if (result?.mcqs?.length) startMode('MCQ')
+    else if (result?.flashcards?.length) startMode('Flashcard')
+    else if (result?.essayPrompts?.length) startMode('Essay')
+  }
+
   const startMode = (mode: 'MCQ' | 'Flashcard' | 'Essay') => {
-    if (mode === 'Flashcard') {
+    if (mode === 'Flashcard' && !completedModes.includes('Flashcard')) {
       setShowHonestyModal(true)
     } else {
       setActiveMode(mode)
@@ -173,6 +240,9 @@ export default function AssessmentsPage() {
     setSelectedOption(null)
     setIsAnswerRevealed(false)
     setIsCardFlipped(false)
+    setEssayResult(null)
+    setEssayText("")
+    setUploadedImages([])
   }
 
   const nextItem = (feedback?: 'mastered' | 'review') => {
@@ -185,9 +255,28 @@ export default function AssessmentsPage() {
       setSelectedOption(null)
       setIsAnswerRevealed(false)
       setIsCardFlipped(false)
+      setEssayResult(null)
     } else {
-      setActiveMode(null)
-      toast({ title: "Session Complete", description: "You've finished this section!" })
+      handleModeCompletion()
+    }
+  }
+
+  const handleModeCompletion = () => {
+    const currentMode = activeMode!
+    setCompletedModes(prev => [...new Set([...prev, currentMode])])
+    setActiveMode(null)
+
+    // Check for next mode in sequence
+    if (currentMode === 'MCQ' && result?.flashcards?.length) {
+      toast({ title: "MCQs Finished!", description: "Next: Mastery Flashcards" })
+      setTimeout(() => startMode('Flashcard'), 800)
+    } else if ((currentMode === 'MCQ' || currentMode === 'Flashcard') && result?.essayPrompts?.length) {
+      toast({ title: "Almost There!", description: "Next: Writing Challenge" })
+      setTimeout(() => startMode('Essay'), 800)
+    } else {
+      toast({ title: "Journey Complete!", description: "You've finished all sections!" })
+      playSuccessSound()
+      confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } })
     }
   }
 
@@ -389,19 +478,14 @@ export default function AssessmentsPage() {
                       isCardFlipped ? "rotate-y-180" : ""
                     )}
                   >
-                    {/* Front */}
                     <Card className="absolute inset-0 backface-hidden rounded-[40px] bg-white dark:bg-slate-900 border-none shadow-2xl flex flex-col items-center justify-center p-8 text-center overflow-hidden">
                       <Badge className="bg-primary/10 text-primary border-none mb-4 shrink-0">QUESTION</Badge>
                       <div className="flex-1 flex items-center justify-center overflow-y-auto w-full no-scrollbar">
                         <h3 className="text-xl font-black font-headline text-slate-900 dark:text-white leading-snug px-2">{result.flashcards[currentIdx].front}</h3>
                       </div>
-                      <div className="mt-4 animate-bounce shrink-0">
-                        <RotateCw className="h-5 w-5 text-slate-300" />
-                      </div>
+                      <div className="mt-4 animate-bounce shrink-0"><RotateCw className="h-5 w-5 text-slate-300" /></div>
                       <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 mt-2">Tap to see answer</p>
                     </Card>
-
-                    {/* Back */}
                     <Card className="absolute inset-0 backface-hidden rotate-y-180 rounded-[40px] bg-primary text-white border-none shadow-2xl flex flex-col items-center justify-center p-8 text-center overflow-hidden">
                       <Badge className="bg-white/20 text-white border-none mb-4 shrink-0">ANSWER</Badge>
                       <div className="flex-1 flex items-center justify-center overflow-y-auto w-full no-scrollbar text-sm font-bold leading-relaxed px-2">
@@ -413,39 +497,78 @@ export default function AssessmentsPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pb-6 shrink-0">
-                  <Button 
-                    onClick={(e) => { e.stopPropagation(); nextItem('review'); }}
-                    variant="outline"
-                    className="h-14 rounded-2xl border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400 font-black text-[10px] hover:bg-amber-100"
-                  >
-                    STILL LEARNING
-                  </Button>
-                  <Button 
-                    onClick={(e) => { e.stopPropagation(); nextItem('mastered'); }}
-                    className="h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] shadow-lg shadow-emerald-500/20"
-                  >
-                    I KNOW IT
-                  </Button>
+                  <Button onClick={(e) => { e.stopPropagation(); nextItem('review'); }} variant="outline" className="h-14 rounded-2xl border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400 font-black text-[10px]">STILL LEARNING</Button>
+                  <Button onClick={(e) => { e.stopPropagation(); nextItem('mastered'); }} className="h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px]">I KNOW IT</Button>
                 </div>
               </div>
             )}
 
             {activeMode === 'Essay' && result.essayPrompts && (
-              <Card className="border-none shadow-2xl rounded-[40px] bg-white dark:bg-slate-900 p-8 flex flex-col space-y-6 animate-in slide-in-from-bottom-4 h-full overflow-hidden">
-                <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pr-1">
-                  <Badge className="bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 border-none w-fit font-black text-[10px]">ESSAY CHALLENGE</Badge>
-                  <h2 className="text-xl font-black font-headline text-slate-900 dark:text-white leading-tight">{result.essayPrompts[currentIdx].prompt}</h2>
-                  <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-2xl space-y-4 border dark:border-slate-800">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Key Concepts to Include:</p>
-                    <ul className="space-y-2">
-                      {result.essayPrompts[currentIdx].modelAnswerOutline.map((p, i) => (
-                        <li key={i} className="flex gap-2 text-xs font-medium text-slate-600 dark:text-slate-400"><div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />{p}</li>
-                      ))}
-                    </ul>
+              <div className="flex-1 flex flex-col space-y-6 overflow-hidden">
+                <Card className="border-none shadow-2xl rounded-[40px] bg-white dark:bg-slate-900 p-8 flex flex-col space-y-6 animate-in slide-in-from-bottom-4 flex-1 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pr-1">
+                    <Badge className="bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 border-none w-fit font-black text-[10px]">PROFESSOR'S CHALLENGE</Badge>
+                    <h2 className="text-xl font-black font-headline text-slate-900 dark:text-white leading-tight">{result.essayPrompts[currentIdx].prompt}</h2>
+                    
+                    {!essayResult ? (
+                      <div className="space-y-6">
+                        <div onClick={() => essayImageInputRef.current?.click()} className="h-28 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-slate-50 dark:bg-slate-950 transition-colors">
+                          <input type="file" className="hidden" ref={essayImageInputRef} onChange={handleEssayImageUpload} accept="image/*" multiple />
+                          <PlusCircle className="h-6 w-6 text-primary mb-2" />
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">Upload Handwritten Photos (Max 5)</p>
+                        </div>
+                        {uploadedImages.length > 0 && (
+                          <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                            {uploadedImages.map((file, idx) => (
+                              <div key={idx} className="relative aspect-square w-12 h-12 rounded-xl overflow-hidden border shrink-0">
+                                <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                                <button onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))} className="absolute top-0.5 right-0.5 bg-destructive h-4 w-4 rounded-full flex items-center justify-center text-white"><X className="h-2 w-2" /></button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Textarea placeholder="OR type your answer here..." className="min-h-[120px] rounded-2xl p-4 bg-slate-50 dark:bg-slate-950 border-none dark:text-white text-xs" value={essayText} onChange={(e) => setEssayText(e.target.value)} />
+                        <Button onClick={handleEssayAnalysis} disabled={isAnalyzingEssay} className="w-full h-14 rounded-2xl bg-slate-900 dark:bg-primary font-bold">
+                          {isAnalyzingEssay ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <SendHorizontal className="h-5 w-5 mr-2" />}
+                          {isAnalyzingEssay ? "Analyzing Handwriting..." : "Submit to Professor"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                        <div className="text-center p-6 bg-slate-50 dark:bg-slate-950 rounded-[32px] border">
+                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Grade</p>
+                           <h3 className="text-5xl font-black text-slate-900 dark:text-white">{essayResult.score}<span className="text-lg text-slate-400">/10</span></h3>
+                        </div>
+                        <Accordion type="single" collapsible className="w-full space-y-3">
+                          <AccordionItem value="feedback" className="border-none">
+                            <AccordionTrigger className="h-12 bg-slate-50 dark:bg-slate-950 px-5 rounded-2xl hover:no-underline font-bold text-xs">Professor's Feedback</AccordionTrigger>
+                            <AccordionContent className="pt-4 space-y-4">
+                               {[{t:"Intro", c:essayResult.feedbackBySection.introduction, cl:"text-blue-500"}, {t:"Body", c:essayResult.feedbackBySection.mainBody, cl:"text-primary"}, {t:"Grammar", c:essayResult.feedbackBySection.grammarAndVocabulary, cl:"text-amber-500"}].map((s,i) => (
+                                 <div key={i} className="p-4 bg-white dark:bg-slate-900 border rounded-2xl">
+                                   <p className={cn("text-[8px] font-black uppercase mb-1", s.cl)}>{s.t}</p>
+                                   <p className="text-[10px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed">{s.c}</p>
+                                 </div>
+                               ))}
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="rewrite" className="border-none">
+                            <AccordionTrigger className="h-12 bg-slate-900 text-white px-5 rounded-2xl hover:no-underline font-bold text-xs">The Mentor's Masterclass</AccordionTrigger>
+                            <AccordionContent className="pt-4">
+                              <div className="bg-slate-900 text-white p-5 rounded-3xl space-y-3">
+                                <p className="text-[9px] font-bold text-primary uppercase">Elite Rewrite:</p>
+                                <div className="max-h-[200px] overflow-y-auto pr-1 no-scrollbar text-[10px] italic leading-relaxed text-slate-200">
+                                  {essayResult.suggestedRewrite}
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                        <Button onClick={() => nextItem()} className="w-full h-14 rounded-2xl bg-primary text-white font-bold">Finish Practice</Button>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <Button onClick={() => nextItem()} className="w-full h-14 rounded-2xl bg-slate-900 dark:bg-primary text-white font-bold shrink-0">Complete Practice</Button>
-              </Card>
+                </Card>
+              </div>
             )}
           </div>
         </div>
@@ -457,33 +580,38 @@ export default function AssessmentsPage() {
               <h2 className="text-2xl font-black font-headline text-slate-900 dark:text-white">Journey Ready</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Profile: {level}</p>
             </div>
+            
             <div className="grid grid-cols-1 gap-3">
-              {result.mcqs?.length ? (
-                <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800">
-                  <ListChecks className="h-5 w-5 text-primary shrink-0" />
-                  <div className="flex-1 text-left"><p className="text-xs font-black dark:text-white">{result.mcqs.length} Knowledge Checks</p></div>
-                  <Button size="sm" onClick={() => startMode('MCQ')} className="rounded-xl bg-slate-900 dark:bg-primary text-[10px] font-black text-white px-4">START</Button>
+              {[
+                { id: 'MCQ', icon: ListChecks, label: 'Knowledge Checks', list: result.mcqs },
+                { id: 'Flashcard', icon: RotateCw, label: 'Mastery Cards', list: result.flashcards, color: 'text-amber-500' },
+                { id: 'Essay', icon: ClipboardList, label: 'Writing Prompts', list: result.essayPrompts, color: 'text-emerald-500' }
+              ].map((m) => m.list?.length ? (
+                <div key={m.id} className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800">
+                  <m.icon className={cn("h-5 w-5 shrink-0", m.color || "text-primary")} />
+                  <div className="flex-1 text-left">
+                    <p className="text-xs font-black dark:text-white">{m.list.length} {m.label}</p>
+                  </div>
+                  {completedModes.includes(m.id) ? (
+                    <div className="flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-900/20 px-3 py-1.5 rounded-xl">
+                      <Check className="h-3 w-3 text-emerald-600" />
+                      <span className="text-[10px] font-black text-emerald-600">DONE</span>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-              {result.flashcards?.length ? (
-                <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800">
-                  <RotateCw className="h-5 w-5 text-amber-500 shrink-0" />
-                  <div className="flex-1 text-left"><p className="text-xs font-black dark:text-white">{result.flashcards.length} Mastery Cards</p></div>
-                  <Button size="sm" onClick={() => startMode('Flashcard')} className="rounded-xl bg-slate-900 dark:bg-primary text-[10px] font-black text-white px-4">START</Button>
-                </div>
-              ) : null}
-              {result.essayPrompts?.length ? (
-                <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800">
-                  <ClipboardList className="h-5 w-5 text-emerald-500 shrink-0" />
-                  <div className="flex-1 text-left"><p className="text-xs font-black dark:text-white">{result.essayPrompts.length} Writing Prompts</p></div>
-                  <Button size="sm" onClick={() => startMode('Essay')} className="rounded-xl bg-slate-900 dark:bg-primary text-[10px] font-black text-white px-4">PRACTICE</Button>
-                </div>
-              ) : null}
+              ) : null)}
             </div>
-            <Button variant="ghost" onClick={() => setResult(null)} className="text-[10px] font-black uppercase tracking-widest text-slate-400">Build New Journey</Button>
+
+            <Button onClick={startJourney} className="w-full h-18 rounded-3xl bg-slate-900 dark:bg-primary text-white font-black text-lg shadow-xl">
+              {completedModes.length > 0 ? "Continue Journey" : "Start Your Journey"}
+              <ChevronRight className="ml-2 h-6 w-6" />
+            </Button>
+            
+            <Button variant="ghost" onClick={() => { setResult(null); setCompletedModes([]); }} className="text-[10px] font-black uppercase tracking-widest text-slate-400">Build New Journey</Button>
           </Card>
         </div>
       )}
     </div>
   )
 }
+

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef } from "react"
@@ -19,7 +20,8 @@ import {
   Eye,
   Award,
   BookMarked,
-  Info
+  Info,
+  CheckCircle2
 } from "lucide-react"
 import { 
   Select, 
@@ -33,6 +35,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import confetti from 'canvas-confetti'
 
 export const maxDuration = 60;
 
@@ -53,10 +56,17 @@ export default function WritingWizardPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [result, setResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
-  const [showModelAnswer, setShowModelAnswer] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+
+  const playSuccessSound = () => {
+    try {
+      const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3");
+      audio.volume = 0.5;
+      audio.play();
+    } catch (e) { console.log(e); }
+  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -94,9 +104,10 @@ export default function WritingWizardPage() {
       } else {
         setResult(evaluation)
         setStep(5)
+        playSuccessSound()
+        confetti({ particleCount: 200, spread: 90, origin: { y: 0.7 } })
       }
     } catch (error: any) {
-      console.error("Evaluation Error:", error)
       toast({ title: "Critical Error", description: "Professor is currently unavailable.", variant: "destructive" })
     } finally {
       setIsLoading(false)
@@ -160,13 +171,13 @@ export default function WritingWizardPage() {
             <CardContent className="p-8 pt-0 space-y-6">
               <div onClick={() => fileInputRef.current?.click()} className="h-32 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors bg-slate-50/50 dark:bg-slate-950">
                 <input type="file" className="hidden" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" multiple />
-                <PlusCircle className="h-6 w-6 text-primary mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase">Upload Photos (Max 5)</p>
+                <PlusCircle className="h-6 w-6 text-primary mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase">Upload Handwritten Photos (Max 5)</p>
               </div>
               {uploadedImages.length > 0 && (
                 <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                   {uploadedImages.map((file, idx) => (
                     <div key={idx} className="relative aspect-square w-16 h-16 rounded-xl overflow-hidden border shrink-0">
-                      <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="Handwriting" />
+                      <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
                       <button onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-destructive h-4 w-4 rounded-full flex items-center justify-center text-white"><X className="h-2 w-2" /></button>
                     </div>
                   ))}
@@ -193,7 +204,7 @@ export default function WritingWizardPage() {
                  {isLoading ? (
                    <>
                      <Loader2 className="h-5 w-5 animate-spin mr-3" />
-                     {isScanning ? "Scanning..." : "Analyzing..."}
+                     {isScanning ? "Scanning Handwriting..." : "Analyzing Context..."}
                    </>
                  ) : (
                    <><SendHorizontal className="h-5 w-5 mr-3 text-white" /> Start Evaluation</>
@@ -218,7 +229,7 @@ export default function WritingWizardPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800 text-left">
                   <Award className="h-5 w-5 text-emerald-600 shrink-0" />
-                  <div><p className="text-[9px] font-bold text-emerald-600 uppercase">Key Strengths</p><p className="text-[10px] font-medium dark:text-slate-300 truncate max-w-[200px]">{result.strengths[0]}...</p></div>
+                  <div><p className="text-[9px] font-bold text-emerald-600 uppercase">Key Strength</p><p className="text-[10px] font-medium dark:text-slate-300 truncate max-w-[200px]">{result.strengths[0]}</p></div>
                 </div>
               </div>
 
@@ -237,9 +248,9 @@ export default function WritingWizardPage() {
                         ].map((sec, i) => (
                           <div key={i} className={cn("p-5 rounded-2xl border border-slate-100 dark:border-slate-800", sec.bg)}>
                             <h4 className={cn("text-[9px] font-black uppercase tracking-widest mb-2", sec.color)}>{sec.title}</h4>
-                            <div className="max-h-[150px] overflow-y-auto pr-1 no-scrollbar text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                            <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                               {sec.content}
-                            </div>
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -252,26 +263,18 @@ export default function WritingWizardPage() {
                    </AccordionTrigger>
                    <AccordionContent className="pt-4 text-left">
                       <div className="bg-slate-900 text-white p-6 rounded-3xl space-y-4 border border-white/10">
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Recommended Outline:</p>
-                          <ul className="grid grid-cols-1 gap-1">
-                            {result.modelAnswerOutline.map((point, idx) => (
-                              <li key={idx} className="text-[10px] text-slate-400 flex gap-2"><div className="h-1 w-1 rounded-full bg-primary mt-1 shrink-0" />{point}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="h-px bg-white/10 w-full" />
-                        <div className="max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
-                           <p className="text-xs leading-relaxed text-slate-200 whitespace-pre-wrap italic">{result.suggestedRewrite}</p>
+                        <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Elite Rewrite:</p>
+                        <div className="max-h-[300px] overflow-y-auto pr-2 no-scrollbar text-xs leading-relaxed text-slate-200 italic whitespace-pre-wrap">
+                          {result.suggestedRewrite}
                         </div>
                       </div>
                    </AccordionContent>
                 </AccordionItem>
               </Accordion>
 
-              <div className="flex gap-3 pt-4 sticky bottom-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm pb-4">
+              <div className="flex gap-3 pt-4">
                 <Button variant="outline" onClick={() => {setResult(null); setStep(1)}} className="flex-1 h-14 rounded-2xl font-bold dark:text-white dark:border-slate-800">New Practice</Button>
-                <Button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 shrink-0"><ChevronLeft className="h-5 w-5 rotate-90" /></Button>
+                <Button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 shrink-0"><CheckCircle2 className="h-5 w-5 text-emerald-500" /></Button>
               </div>
             </Card>
           </div>
