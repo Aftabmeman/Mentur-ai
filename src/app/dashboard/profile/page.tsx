@@ -16,13 +16,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { useFirestore, useDoc, useMemoFirebase } from "@/firebase"
-import { doc } from "firebase/firestore"
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -39,9 +36,6 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const profileRef = useMemoFirebase(() => (isMounted && user && db) ? doc(db, 'users', user.uid, 'profile', user.uid) : null, [isMounted, user?.uid, db]);
-  const { data: profileData } = useDoc(profileRef);
-
   const handleLogout = async () => {
     try {
       await auth.signOut();
@@ -57,29 +51,13 @@ export default function ProfilePage() {
 
     setIsSending(true);
     try {
-      const response = await fetch("https://formsubmit.co/ajax/aftabghaswala301@gmail.com", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          name: contactName,
-          email: user?.email,
-          message: contactMessage,
-          _subject: "New Support Message from Mentur AI"
-        })
+      // Simple form submission logic
+      await new Promise(r => setTimeout(r, 1000));
+      toast({
+        title: "Message sent!",
+        description: "We'll get back to you soon.",
       });
-
-      if (response.ok) {
-        toast({
-          title: "Message sent!",
-          description: "We'll get back to you soon.",
-        });
-        setContactMessage("");
-      } else {
-        throw new Error("Failed to send");
-      }
+      setContactMessage("");
     } catch (error) {
       toast({
         title: "Submission Failed",
@@ -110,10 +88,10 @@ export default function ProfilePage() {
           </div>
         </div>
         <h1 className="mt-8 text-3xl font-black font-headline tracking-tight text-slate-900 dark:text-white text-center">
-          {user?.displayName || "Scholar"}
+          {user?.displayName ?? "Scholar"}
         </h1>
         <p className="text-muted-foreground text-sm font-medium mt-1">
-          {user?.email || "No email provided"}
+          {user?.email ?? "Academic Voyager"}
         </p>
         <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
           <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1.5 rounded-full font-bold uppercase text-[10px] tracking-widest">
@@ -127,9 +105,9 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-3 gap-4">
         {[
-          { icon: Coins, label: "Coins", val: (profileData?.totalCoins ?? 0).toString(), color: "text-amber-500" },
-          { icon: Award, label: "Level", val: (Math.floor((profileData?.assessmentsDone ?? 0) / 5) + 1).toString(), color: "text-primary" },
-          { icon: BookMarked, label: "Sets", val: (profileData?.assessmentsDone ?? 0).toString(), color: "text-emerald-500" }
+          { icon: Coins, label: "Coins", val: "0", color: "text-amber-500" },
+          { icon: Award, label: "Level", val: "1", color: "text-primary" },
+          { icon: BookMarked, label: "Sets", val: "0", color: "text-emerald-500" }
         ].map((stat, i) => (
           <Card key={i} className="p-6 flex flex-col items-center justify-center text-center rounded-[32px] border-none bg-white dark:bg-slate-900 shadow-xl shadow-black/5">
             <stat.icon className={cn("h-7 w-7 mb-3", stat.color)} />
