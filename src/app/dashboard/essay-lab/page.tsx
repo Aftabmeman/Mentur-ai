@@ -1,14 +1,12 @@
-
 "use client"
 
 import { useState, useRef } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { 
   Sparkles, 
-  CheckCircle2, 
   Type, 
   X, 
   Loader2, 
@@ -19,7 +17,9 @@ import {
   BookOpen, 
   SendHorizontal, 
   Eye,
-  ScanText
+  Award,
+  BookMarked,
+  Info
 } from "lucide-react"
 import { 
   Select, 
@@ -76,6 +76,7 @@ export default function WritingWizardPage() {
     if (uploadedImages.length > 0) setIsScanning(true)
 
     try {
+      // Simulate OCR step with loading if images exist
       if (uploadedImages.length > 0) {
         await new Promise(r => setTimeout(r, 2000))
         setIsScanning(false)
@@ -165,13 +166,15 @@ export default function WritingWizardPage() {
                 <div className="grid grid-cols-5 gap-2">
                   {uploadedImages.map((file, idx) => (
                     <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border">
-                      <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                      <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="Handwriting" />
                       <button onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-destructive h-5 w-5 rounded-full flex items-center justify-center text-white"><X className="h-3 w-3" /></button>
                     </div>
                   ))}
                 </div>
               )}
-              <Textarea placeholder="OR type your full response here..." className="min-h-[150px] rounded-2xl p-5 bg-slate-50 dark:bg-slate-950 border-none dark:text-white" value={essayText} onChange={(e) => setEssayText(e.target.value)} />
+              <div className="relative">
+                <Textarea placeholder="OR type your full response here..." className="min-h-[150px] rounded-2xl p-5 bg-slate-50 dark:bg-slate-950 border-none dark:text-white" value={essayText} onChange={(e) => setEssayText(e.target.value)} />
+              </div>
               <div className="flex gap-3">
                 <Button variant="ghost" onClick={() => setStep(2)} className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-800"><ChevronLeft className="h-6 w-6 dark:text-white" /></Button>
                 <Button onClick={() => setStep(4)} disabled={!essayText.trim() && uploadedImages.length === 0} className="flex-1 h-14 rounded-2xl bg-primary text-white font-bold">Review Submission <ChevronRight className="ml-2 h-5 w-5" /></Button>
@@ -184,16 +187,16 @@ export default function WritingWizardPage() {
           <Card className="border-none shadow-xl rounded-[40px] bg-white dark:bg-slate-900 p-10 text-center animate-in zoom-in-95">
              <div className="bg-primary/10 h-20 w-20 rounded-[28px] flex items-center justify-center mx-auto mb-6"><Sparkles className="h-10 w-10 text-primary" /></div>
              <h2 className="text-3xl font-black font-headline text-slate-900 dark:text-white">Ready for Analysis?</h2>
-             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">The Professor will evaluate your logic, grammar, and structure.</p>
+             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">The Elite Mentor will evaluate your logic, depth, and UPSC-level reasoning.</p>
              <div className="mt-8 space-y-4">
                <Button onClick={handleEvaluate} disabled={isLoading} className="w-full h-18 rounded-[28px] bg-slate-900 dark:bg-primary text-white font-black text-lg">
                  {isLoading ? (
                    <>
                      <Loader2 className="h-6 w-6 animate-spin mr-3" />
-                     {isScanning ? "Scanning Handwriting..." : "Analyzing Answer..."}
+                     {isScanning ? "Scanning Handwriting..." : "Elite Mentor Evaluating..."}
                    </>
                  ) : (
-                   <><SendHorizontal className="h-6 w-6 mr-3 text-white" /> Analyze Answer</>
+                   <><SendHorizontal className="h-6 w-6 mr-3 text-white" /> Start Evaluation</>
                  )}
                </Button>
                <Button variant="ghost" onClick={() => setStep(3)} className="font-bold text-slate-400 hover:text-primary">Back to Edit</Button>
@@ -204,13 +207,17 @@ export default function WritingWizardPage() {
         {step === 5 && result && (
           <div className="animate-in slide-in-from-bottom-8 duration-700 space-y-6 pb-20">
             <Card className="border-none shadow-2xl rounded-[40px] p-10 text-center bg-white dark:bg-slate-900 space-y-8">
-              <div className="space-y-1"><p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Analysis Score</p><h2 className="text-7xl font-black font-headline text-slate-900 dark:text-white">{result.score}<span className="text-2xl text-slate-300">/10</span></h2></div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Badge variant="outline" className="border-primary/20 text-primary uppercase font-black text-[10px] tracking-widest px-4 py-1">Professor's Final Grade</Badge>
+              </div>
+              <div className="space-y-1"><p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Strict Analysis Score</p><h2 className="text-7xl font-black font-headline text-slate-900 dark:text-white">{result.score}<span className="text-2xl text-slate-300">/10</span></h2></div>
+              
               <div className="grid grid-cols-1 gap-4 text-left">
                 {[
-                  { title: "Intro", content: result.feedbackBySection.introduction, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
-                  { title: "Main Body", content: result.feedbackBySection.mainBody, color: "text-primary", bg: "bg-primary/5 dark:bg-primary/10" },
+                  { title: "Intro & Hook", content: result.feedbackBySection.introduction, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
+                  { title: "Depth & Flow", content: result.feedbackBySection.mainBody, color: "text-primary", bg: "bg-primary/5 dark:bg-primary/10" },
                   { title: "Conclusion", content: result.feedbackBySection.conclusion, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/10" },
-                  { title: "Grammar", content: result.feedbackBySection.grammarAndVocabulary, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/10" }
+                  { title: "Vocabulary Table", content: result.feedbackBySection.grammarAndVocabulary, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/10" }
                 ].map((sec, i) => (
                   <div key={i} className={cn("p-6 rounded-3xl border border-slate-100 dark:border-slate-800", sec.bg)}>
                     <h4 className={cn("text-[10px] font-black uppercase tracking-widest mb-2", sec.color)}>{sec.title}</h4>
@@ -218,9 +225,21 @@ export default function WritingWizardPage() {
                   </div>
                 ))}
               </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800 text-left">
+                  <Award className="h-6 w-6 text-emerald-600 shrink-0" />
+                  <div><p className="text-[10px] font-bold text-emerald-600 uppercase">Key Strengths</p><p className="text-xs font-medium dark:text-slate-300">{result.strengths.join(", ")}</p></div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-800 text-left">
+                  <BookMarked className="h-6 w-6 text-amber-600 shrink-0" />
+                  <div><p className="text-[10px] font-bold text-amber-600 uppercase">Improvement Areas</p><p className="text-xs font-medium dark:text-slate-300">{result.weaknesses.join(", ")}</p></div>
+                </div>
+              </div>
+
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => {setResult(null); setStep(1)}} className="flex-1 h-14 rounded-2xl font-bold dark:text-white dark:border-slate-800">New Session</Button>
-                <Button onClick={() => setShowModelAnswer(!showModelAnswer)} className="flex-1 h-14 rounded-2xl bg-slate-900 dark:bg-primary text-white font-bold gap-2"><Eye className="h-5 w-5 text-white" />{showModelAnswer ? "Hide Rewrite" : "See Rewrite"}</Button>
+                <Button onClick={() => setShowModelAnswer(!showModelAnswer)} className="flex-1 h-14 rounded-2xl bg-slate-900 dark:bg-primary text-white font-bold gap-2"><Eye className="h-5 w-5 text-white" />{showModelAnswer ? "Hide Masterclass" : "See Masterclass"}</Button>
               </div>
             </Card>
 
@@ -228,9 +247,20 @@ export default function WritingWizardPage() {
               <Card className="border-none shadow-2xl rounded-[32px] p-10 space-y-8 bg-slate-900 text-white animate-in zoom-in-95">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center"><Sparkles className="h-5 w-5 text-primary" /></div>
-                  <div><h3 className="text-lg font-bold">Professor's Perfect Rewrite</h3><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mastery Level Example</p></div>
+                  <div><h3 className="text-lg font-bold">The Mentor's Masterclass Rewrite</h3><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sophisticated Academic Standard</p></div>
                 </div>
-                <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-wrap italic bg-white/5 p-6 rounded-2xl border border-white/10">{result.suggestedRewrite}</p>
+                <div className="bg-white/5 p-8 rounded-3xl border border-white/10 space-y-6">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Recommended Multidimensional Outline:</p>
+                    <ul className="grid grid-cols-1 gap-2">
+                      {result.modelAnswerOutline.map((point, idx) => (
+                        <li key={idx} className="text-xs text-slate-400 flex gap-2"><div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="h-px bg-white/10 w-full" />
+                  <p className="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap italic">{result.suggestedRewrite}</p>
+                </div>
               </Card>
             )}
           </div>
