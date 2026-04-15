@@ -47,16 +47,19 @@ Your role is to grade user essay attempts (typed or handwritten via OCR) with st
 STRICT OPERATING RULES:
 1. ROLE: Senior academic professor.
 2. EVALUATION LOGIC:
-   - If images are provided, first perform deep OCR to extract the text.
+   - If images are provided, perform deep OCR to extract the text first.
    - Evaluate based on Clarity, Logic, and Depth.
    - Award 50 to 100 coins based on merit.
    - If 'UPSC' or 'Competitive' level is mentioned, check for 'Critical Thinking'.
-3. OUTPUT: Valid JSON only.
+3. OUTPUT: Return ONLY a valid JSON object.
 
 JSON STRUCTURE:
 {
   "evaluationData": {
     "type": "Essay",
+    "questionsTotal": null,
+    "questionsCorrect": null,
+    "accuracyPercent": null,
     "essayScoreRaw": 0-100,
     "coinsEarned": 50-100,
     "status": "Mastered/Improving/Needs Practice"
@@ -65,10 +68,6 @@ JSON STRUCTURE:
   "suggestedRewrite": "A masterclass version..."
 }`;
 
-  // Since we are using Groq's text model, we'll simulate the OCR instruction or use a Vision model if available.
-  // Note: For real OCR, we should ideally use a multimodal model like Gemini 1.5 Flash via Genkit.
-  // For now, we enhance the prompt to handle the intent of images.
-  
   const userPrompt = `
 Topic: ${input.topic}
 Level: ${input.academicLevel}
@@ -76,9 +75,9 @@ Question: ${input.question || 'Self-Practice'}
 
 Student's Content:
 ${input.essayText ? `Typed Text: """${input.essayText}"""` : ""}
-${input.imageUris && input.imageUris.length > 0 ? `[User has provided ${input.imageUris.length} photos of handwritten work. Please assume the role of an expert who can interpret the logic even from handwritten scans.]` : ""}
+${input.imageUris && input.imageUris.length > 0 ? `[User provided ${input.imageUris.length} photos of handwritten work. Analyze the visible logic and text.]` : ""}
 
-Return evaluation in JSON format.`;
+Return the evaluation JSON.`;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -88,7 +87,7 @@ Return evaluation in JSON format.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile', // For production OCR, switch to a Vision model
+        model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -101,13 +100,23 @@ Return evaluation in JSON format.`;
     if (!response.ok) throw new Error(`Groq Error: ${response.statusText}`);
 
     const data = await response.json();
-    const content = JSON.parse(data.choices[0].message.content);
+    const rawContent = data.choices[0].message.content;
+    const content = JSON.parse(rawContent);
     
-    return EvaluateEssayFeedbackOutputSchema.parse(content);
+    // Ensure the structure matches what Zod expects
+    return EvaluateEssayFeedbackOutputSchema.parse({
+      ...content,
+      evaluationData: {
+        ...content.evaluationData,
+        questionsTotal: content.evaluationData.questionsTotal ?? null,
+        questionsCorrect: content.evaluationData.questionsCorrect ?? null,
+        accuracyPercent: content.evaluationData.accuracyPercent ?? null,
+      }
+    });
   } catch (error: any) {
     console.error("Evaluation Error:", error);
     return { 
-      error: "Professor is currently busy. Please try again.", 
+      error: "Professor is currently busy. Please try smaller photos or check your connection.", 
       evaluationData: { type: 'Essay', questionsTotal: null, questionsCorrect: null, accuracyPercent: null, essayScoreRaw: 0, coinsEarned: 0, status: 'Needs Practice' },
       professorFeedback: "",
       suggestedRewrite: ""
