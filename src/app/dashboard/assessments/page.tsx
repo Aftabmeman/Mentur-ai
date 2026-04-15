@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
   CheckCircle2, 
-  X, 
   Loader2, 
   FileIcon, 
   ChevronRight, 
@@ -24,8 +23,7 @@ import {
   PlusCircle,
   Check,
   SendHorizontal,
-  Coins,
-  Trophy
+  Coins
 } from "lucide-react"
 import { 
   Select, 
@@ -438,7 +436,7 @@ export default function AssessmentsPage() {
               <div className="flex-1 flex flex-col space-y-6">
                 <div className="grid grid-cols-2 gap-3 px-4">
                   <div className="bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border flex items-center gap-3">
-                    <Award className="h-5 w-5 text-emerald-600" />
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                     <div><p className="text-[7px] font-black uppercase text-emerald-600">Mastered</p><p className="text-lg font-black dark:text-emerald-400">{masteredCount}</p></div>
                   </div>
                   <div className="bg-amber-50 dark:bg-amber-900/10 p-3 rounded-2xl border flex items-center gap-3">
@@ -490,20 +488,20 @@ export default function AssessmentsPage() {
                   ) : (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                       <div className="text-center p-6 bg-slate-50 dark:bg-slate-950 rounded-[32px] border">
-                        <Badge variant="outline" className="mb-2">DATA_BLOCK</Badge>
+                        <Badge variant="outline" className="mb-2">EVALUATION_DATA</Badge>
                         <div className="grid grid-cols-2 gap-4 text-left mt-2">
                            <div className="p-3 bg-white dark:bg-slate-900 rounded-xl">
-                              <p className="text-[8px] font-bold text-slate-400 uppercase">Marks</p>
-                              <p className="text-xl font-black dark:text-white">{essayResult.dataBlock.marks}%</p>
+                              <p className="text-[8px] font-bold text-slate-400 uppercase">Score</p>
+                              <p className="text-xl font-black dark:text-white">{essayResult.evaluationData.essayScoreRaw}%</p>
                            </div>
                            <div className="p-3 bg-white dark:bg-slate-900 rounded-xl">
                               <p className="text-[8px] font-bold text-slate-400 uppercase">Coins</p>
-                              <div className="flex items-center gap-1.5"><Coins className="h-4 w-4 text-amber-500" /><p className="text-xl font-black dark:text-white">{essayResult.dataBlock.coins}</p></div>
+                              <div className="flex items-center gap-1.5"><Coins className="h-4 w-4 text-amber-500" /><p className="text-xl font-black dark:text-white">{essayResult.evaluationData.coinsEarned}</p></div>
                            </div>
                         </div>
                         <div className="mt-4 p-3 bg-primary/5 rounded-xl text-center">
                            <p className="text-[8px] font-bold text-primary uppercase">Status</p>
-                           <p className="text-sm font-black text-primary">{essayResult.dataBlock.status}</p>
+                           <p className="text-sm font-black text-primary">{essayResult.evaluationData.status}</p>
                         </div>
                       </div>
                       <Accordion type="single" collapsible className="w-full space-y-3">
@@ -514,7 +512,7 @@ export default function AssessmentsPage() {
                           </AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="rewrite" className="border-none">
-                          <AccordionTrigger className="h-12 bg-slate-900 text-white px-5 rounded-2xl hover:no-underline font-bold text-xs">The Mentor's Masterclass</AccordionTrigger>
+                          <AccordionTrigger className="h-12 bg-slate-900 text-white px-5 rounded-2xl hover:no-underline font-bold text-xs">Masterclass Rewrite</AccordionTrigger>
                           <AccordionContent className="pt-4">
                               <div className="bg-slate-900 text-white p-5 rounded-3xl text-[10px] leading-relaxed italic">{essayResult.suggestedRewrite}</div>
                           </AccordionContent>

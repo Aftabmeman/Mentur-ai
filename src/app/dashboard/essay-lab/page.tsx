@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { 
-  Sparkles, 
   Type, 
-  X, 
   Loader2, 
   PlusCircle, 
   ChevronLeft, 
@@ -18,10 +16,9 @@ import {
   GraduationCap, 
   BookOpen, 
   SendHorizontal, 
-  Award, 
-  CheckCircle2,
   Coins,
-  Trophy
+  Trophy,
+  CheckCircle2
 } from "lucide-react"
 import { 
   Select, 
@@ -140,6 +137,7 @@ export default function WritingWizardPage() {
               <div onClick={() => fileInputRef.current?.click()} className="h-32 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-slate-50 dark:bg-slate-950">
                 <input type="file" className="hidden" ref={fileInputRef} onChange={(e) => { const files = Array.from(e.target.files || []); setUploadedImages(prev => [...prev, ...files].slice(0, 5)); }} accept="image/*" multiple />
                 <PlusCircle className="h-6 w-6 text-primary mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase">Upload Photos</p>
+                {uploadedImages.length > 0 && <p className="text-[9px] font-bold text-emerald-500 mt-1">{uploadedImages.length} images ready</p>}
               </div>
               <Textarea placeholder="OR type your answer here..." className="min-h-[150px] rounded-2xl p-5 bg-slate-50 dark:bg-slate-950 border-none dark:text-white text-sm" value={essayText} onChange={(e) => setEssayText(e.target.value)} />
               <Button onClick={handleEvaluate} disabled={isLoading} className="w-full h-14 rounded-2xl bg-primary text-white font-bold">
@@ -153,33 +151,33 @@ export default function WritingWizardPage() {
         {step === 5 && result && (
           <div className="space-y-6 pb-20 animate-in slide-in-from-bottom-8">
             <Card className="border-none shadow-2xl rounded-[40px] p-8 text-center bg-white dark:bg-slate-900 space-y-6">
-              <Badge variant="outline" className="border-primary/20 text-primary uppercase font-black text-[9px] tracking-widest px-3 py-1 mx-auto">DATA_BLOCK Evaluation</Badge>
+              <Badge variant="outline" className="border-primary/20 text-primary uppercase font-black text-[9px] tracking-widest px-3 py-1 mx-auto">EVALUATION_DATA</Badge>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border">
-                   <p className="text-[10px] font-bold text-slate-400 uppercase">Marks</p>
-                   <h2 className="text-4xl font-black text-slate-900 dark:text-white">{result.dataBlock.marks}%</h2>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase">Essay Score</p>
+                   <h2 className="text-4xl font-black text-slate-900 dark:text-white">{result.evaluationData.essayScoreRaw}%</h2>
                 </div>
                 <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-800">
-                   <div className="flex items-center justify-center gap-1.5 mb-1"><Coins className="h-4 w-4 text-amber-500" /><p className="text-[10px] font-bold text-amber-600 uppercase">Rewards</p></div>
-                   <h2 className="text-4xl font-black text-amber-700 dark:text-amber-400">{result.dataBlock.coins}</h2>
+                   <div className="flex items-center justify-center gap-1.5 mb-1"><Coins className="h-4 w-4 text-amber-500" /><p className="text-[10px] font-bold text-amber-600 uppercase">Coins Earned</p></div>
+                   <h2 className="text-4xl font-black text-amber-700 dark:text-amber-400">{result.evaluationData.coinsEarned}</h2>
                 </div>
               </div>
-              <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                 <p className="text-[10px] font-bold text-primary uppercase">Current Status</p>
-                 <h2 className="text-xl font-black text-primary">{result.dataBlock.status}</h2>
+              <div className={cn("p-4 rounded-2xl border", result.evaluationData.status === 'Mastered' ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-primary/5 border-primary/10 text-primary")}>
+                 <p className="text-[10px] font-bold uppercase">Status</p>
+                 <h2 className="text-xl font-black">{result.evaluationData.status}</h2>
               </div>
               
               <Accordion type="single" collapsible className="w-full space-y-3">
                 <AccordionItem value="feedback" className="border-none">
-                   <AccordionTrigger className="h-14 bg-slate-50 dark:bg-slate-950 px-6 rounded-2xl hover:no-underline font-bold text-sm">Professor's Insight</AccordionTrigger>
-                   <AccordionContent className="pt-4 text-left italic text-xs text-slate-600 dark:text-slate-300 leading-relaxed px-4">
+                   <AccordionTrigger className="h-14 bg-slate-50 dark:bg-slate-950 px-6 rounded-2xl hover:no-underline font-bold text-sm">PROFESSOR_FEEDBACK</AccordionTrigger>
+                   <AccordionContent className="pt-4 text-left italic text-xs text-slate-600 dark:text-slate-300 leading-relaxed px-4 max-h-[400px] overflow-y-auto no-scrollbar">
                       "{result.professorFeedback}"
                    </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="masterclass" className="border-none">
                    <AccordionTrigger className="h-14 bg-slate-900 text-white px-6 rounded-2xl hover:no-underline font-bold text-sm">Masterclass Rewrite</AccordionTrigger>
                    <AccordionContent className="pt-4 text-left">
-                      <div className="bg-slate-900 text-white p-6 rounded-3xl text-xs leading-relaxed italic border border-white/10 whitespace-pre-wrap">
+                      <div className="bg-slate-900 text-white p-6 rounded-3xl text-xs leading-relaxed italic border border-white/10 whitespace-pre-wrap max-h-[500px] overflow-y-auto no-scrollbar">
                         {result.suggestedRewrite}
                       </div>
                    </AccordionContent>

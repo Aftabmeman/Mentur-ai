@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Master Professor & Evaluator for Essay Evaluation using llama-3.3-70b.
- * Performs deep multi-dimensional analysis and provides structured DATA_BLOCK output.
+ * @fileOverview Master Professor & Game Evaluator for Essay Evaluation using llama-3.3-70b.
+ * Performs deep multi-dimensional analysis and provides structured EVALUATION_DATA output.
  */
 
 import { z } from 'zod';
@@ -15,9 +15,13 @@ const EvaluateEssayFeedbackInputSchema = z.object({
 export type EvaluateEssayFeedbackInput = z.infer<typeof EvaluateEssayFeedbackInputSchema>;
 
 const EvaluateEssayFeedbackOutputSchema = z.object({
-  dataBlock: z.object({
-    marks: z.number().describe("Score percentage out of 100"),
-    coins: z.number().describe("Coins awarded (50-100 based on quality)"),
+  evaluationData: z.object({
+    type: z.literal('Essay'),
+    questionsTotal: z.number().nullable().describe("N/A for Essay"),
+    questionsCorrect: z.number().nullable().describe("N/A for Essay"),
+    accuracyPercent: z.number().nullable().describe("N/A for Essay"),
+    essayScoreRaw: z.number().describe("Score percentage out of 100"),
+    coinsEarned: z.number().describe("Coins awarded (50-100 based on quality)"),
     status: z.enum(['Mastered', 'Improving', 'Needs Practice']),
   }),
   professorFeedback: z.string().describe("Detailed, professor-style explanation, corrections, and guidance."),
@@ -31,31 +35,32 @@ export async function evaluateEssayFeedback(input: EvaluateEssayFeedbackInput): 
   
   if (!apiKey) return { 
     error: "AI Key is missing.", 
-    dataBlock: { marks: 0, coins: 0, status: 'Needs Practice' },
+    evaluationData: { type: 'Essay', questionsTotal: null, questionsCorrect: null, accuracyPercent: null, essayScoreRaw: 0, coinsEarned: 0, status: 'Needs Practice' },
     professorFeedback: "",
     suggestedRewrite: ""
   };
 
-  const systemPrompt = `You are the "Master Professor & Evaluator" for Mentur AI.
-Your goal is to provide high-quality educational feedback while managing a reward system.
+  const systemPrompt = `You are the "Master Professor & Game Evaluator" for Mentur AI. 
+Your role is to grade user essay attempts with strict but supportive academic standards.
 
 STRICT OPERATING RULES:
-1. ROLE: Act as a supportive but strict academic professor.
-2. EVALUATION LOGIC (ESSAYS):
+1. ROLE: Act as a senior academic professor. Be a strict marker.
+2. EVALUATION LOGIC:
    - Evaluate based on Clarity, Logic, and Depth.
    - Award 50 to 100 coins based on quality.
    - If the student provides a multi-dimensional perspective (e.g., Bio-Psycho-Social), award higher coins.
-3. OUTPUT FORMAT: You must return valid JSON that includes a dataBlock and professorFeedback.
+   - If 'UPSC' or 'Competitive' level is mentioned, check for 'Critical Thinking' and 'Ethical Reasoning'.
+3. OUTPUT: You must return valid JSON that satisfies the schema.
 
-DATA_BLOCK STRUCTURE:
-- Marks: [Score percentage]
-- Coins: [50-100]
-- Status: [Mastered/Improving/Needs Practice]
+EVALUATION_DATA DETAILS:
+- type: Always 'Essay'
+- essayScoreRaw: 0-100 percentage based on merit.
+- coinsEarned: 50-100 based on quality.
+- status: 'Mastered' (90+), 'Improving' (60-89), 'Needs Practice' (<60).
 
 PROFESSOR_FEEDBACK:
-- Be a strict marker. Don't give high scores easily.
-- Explain WHY an answer is wrong or lacking depth.
-- Include a specific 'Masterclass Rewrite' in the suggestedRewrite field.`;
+- Explain WHY the score was given.
+- Provide a Masterclass Rewrite in the suggestedRewrite field.`;
 
   const userPrompt = `Topic: ${input.topic}
 Level: ${input.academicLevel}
@@ -66,7 +71,7 @@ Student's Essay:
 ${input.essayText}
 """
 
-Return JSON format matching the schema.`;
+Return evaluation in JSON format.`;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -95,8 +100,8 @@ Return JSON format matching the schema.`;
   } catch (error: any) {
     console.error("Evaluation Error:", error);
     return { 
-      error: "Professor is busy. Please try again.", 
-      dataBlock: { marks: 0, coins: 0, status: 'Needs Practice' },
+      error: "Professor is currently busy. Please try again.", 
+      evaluationData: { type: 'Essay', questionsTotal: null, questionsCorrect: null, accuracyPercent: null, essayScoreRaw: 0, coinsEarned: 0, status: 'Needs Practice' },
       professorFeedback: "",
       suggestedRewrite: ""
     };
