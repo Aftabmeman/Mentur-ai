@@ -4,7 +4,7 @@ service cloud.firestore {
 
     /**
      * FIRESTORE SECURITY RULES
-     * Updated to support hierarchical user data and profile stats.
+     * Simplified to a robust user-siloed architecture.
      */
 
     function isSignedIn() {
@@ -15,73 +15,16 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    function isUnchanged(field) {
-      return request.resource.data[field] == resource.data[field];
-    }
-
-    // --- Profile Stats Rules ---
-    match /users/{userId}/profile/{profileId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && isUnchanged('id');
-      allow delete: if isExistingOwner(userId);
-    }
-
-    // --- Study Materials ---
-    match /users/{userId}/study_materials/{materialId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(userId) && isUnchanged('userId');
-      allow delete: if isExistingOwner(userId);
-    }
-
-    // --- Assessments ---
-    match /users/{userId}/assessments/{assessmentId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(userId) && isUnchanged('userId');
-      allow delete: if isExistingOwner(userId);
-
-      match /questions/{questionId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.assessmentId == assessmentId;
-        allow update: if isExistingOwner(userId) && isUnchanged('assessmentId');
-        allow delete: if isExistingOwner(userId);
-      }
-    }
-
-    // --- Attempts ---
-    match /users/{userId}/assessment_attempts/{attemptId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(userId) && isUnchanged('userId');
-      allow delete: if isExistingOwner(userId);
-
-      match /responses/{responseId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userAssessmentAttemptId == attemptId;
-        allow update: if isExistingOwner(userId) && isUnchanged('userAssessmentAttemptId');
-        allow delete: if isExistingOwner(userId);
-      }
-    }
-
-    // --- Essays ---
-    match /users/{userId}/submitted_essays/{submittedEssayId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(userId) && isUnchanged('userId');
-      allow delete: if isExistingOwner(userId);
-
-      match /evaluations/{evaluationId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.submittedEssayId == submittedEssayId;
-        allow update: if isExistingOwner(userId) && isUnchanged('submittedEssayId');
-        allow delete: if isExistingOwner(userId);
-      }
+    // --- User Data Silo ---
+    // This recursive wildcard rule covers ALL data under a user's node:
+    // /users/{userId}/profile/stats
+    // /users/{userId}/study_materials/*
+    // /users/{userId}/assessments/*
+    // /users/{userId}/assessments/*/questions/*
+    // /users/{userId}/assessment_attempts/*
+    // /users/{userId}/submitted_essays/*
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if isOwner(userId);
     }
   }
 }
