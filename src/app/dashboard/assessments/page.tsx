@@ -23,7 +23,9 @@ import {
   PlusCircle,
   Check,
   SendHorizontal,
-  Coins
+  Coins,
+  X,
+  ImageIcon
 } from "lucide-react"
 import { 
   Select, 
@@ -52,7 +54,6 @@ import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useUser, useFirestore } from "@/firebase"
-import { incrementUserStats } from "@/firebase/non-blocking-updates"
 
 export const maxDuration = 60;
 
@@ -96,6 +97,7 @@ export default function AssessmentsPage() {
 
   const [essayText, setEssayText] = useState("")
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isAnalyzingEssay, setIsAnalyzingEssay] = useState(false)
   const [essayResult, setEssayResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
 
@@ -114,6 +116,32 @@ export default function AssessmentsPage() {
     } catch (e) { console.log(e); }
   }
 
+  const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newFiles = [...uploadedImages, ...files].slice(0, 5);
+    setUploadedImages(newFiles);
+
+    // Create previews
+    const previews = newFiles.map(file => URL.createObjectURL(file));
+    setImagePreviews(previews);
+  };
+
+  const removeImage = (index: number) => {
+    const newFiles = uploadedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setUploadedImages(newFiles);
+    setImagePreviews(newPreviews);
+  };
+
   const handleModeCompletion = () => {
     if (!activeMode) return;
     const currentMode = activeMode;
@@ -124,11 +152,6 @@ export default function AssessmentsPage() {
     let coinsEarned = 0;
     if (currentMode === 'MCQ') coinsEarned = mcqCorrectCount * 5;
     if (currentMode === 'Flashcard') coinsEarned = (result?.flashcards?.length || 0) * 2;
-
-    // Persist progress to Firebase
-    if (user && db) {
-      incrementUserStats(db, user.uid, coinsEarned);
-    }
 
     toast({ 
       title: `${currentMode} Completed!`, 
@@ -205,10 +228,13 @@ export default function AssessmentsPage() {
 
     setIsAnalyzingEssay(true)
     try {
+      const imageUris = await Promise.all(uploadedImages.map(file => fileToDataUri(file)));
+
       const evaluation = await evaluateEssayFeedback({
         topic: "Journey Practice Session",
         question: result?.essayPrompts?.[currentIdx]?.prompt || "General Essay",
-        essayText: essayText || "[Handwritten scanned content]",
+        essayText: essayText,
+        imageUris: imageUris,
         academicLevel: level,
       })
 
@@ -216,12 +242,6 @@ export default function AssessmentsPage() {
         toast({ title: "Analysis Failed", description: evaluation.error, variant: "destructive" })
       } else {
         setEssayResult(evaluation)
-        
-        // Persist progress to Firebase for Essay
-        if (user && db && evaluation.evaluationData?.coinsEarned) {
-          incrementUserStats(db, user.uid, evaluation.evaluationData.coinsEarned);
-        }
-
         playSuccessSound()
         confetti({ particleCount: 100, spread: 60, origin: { y: 0.8 } })
       }
@@ -263,6 +283,7 @@ export default function AssessmentsPage() {
     setEssayResult(null)
     setEssayText("")
     setUploadedImages([])
+    setImagePreviews([])
     setMcqCorrectCount(0)
   }
 
@@ -490,10 +511,24 @@ export default function AssessmentsPage() {
                   {!essayResult ? (
                     <div className="space-y-6">
                       <div onClick={() => essayImageInputRef.current?.click()} className="h-28 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-slate-50 dark:bg-slate-950 transition-colors">
-                        <input type="file" className="hidden" ref={essayImageInputRef} onChange={(e) => { const files = Array.from(e.target.files || []); setUploadedImages(prev => [...prev, ...files].slice(0, 5)); }} accept="image/*" multiple />
+                        <input type="file" className="hidden" ref={essayImageInputRef} onChange={handleImageSelection} accept="image/*" multiple />
                         <PlusCircle className="h-6 w-6 text-primary mb-2" />
                         <p className="text-[10px] font-bold text-slate-500 uppercase">Upload Handwritten Photos</p>
                       </div>
+
+                      {imagePreviews.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2 py-2">
+                          {imagePreviews.map((preview, i) => (
+                            <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border">
+                              <img src={preview} alt="preview" className="w-full h-full object-cover" />
+                              <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       <Textarea placeholder="OR type your answer here..." className="min-h-[120px] rounded-2xl p-4 bg-slate-50 dark:bg-slate-950 border-none dark:text-white text-xs" value={essayText} onChange={(e) => setEssayText(e.target.value)} />
                       <Button onClick={handleEssayAnalysis} disabled={isAnalyzingEssay} className="w-full h-14 rounded-2xl bg-primary text-white font-bold">
                         {isAnalyzingEssay ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <SendHorizontal className="h-5 w-5 mr-2" />}
@@ -522,14 +557,14 @@ export default function AssessmentsPage() {
                       <Accordion type="single" collapsible className="w-full space-y-3">
                         <AccordionItem value="feedback" className="border-none">
                           <AccordionTrigger className="h-12 bg-slate-50 dark:bg-slate-950 px-5 rounded-2xl hover:no-underline font-bold text-xs">Professor's Feedback</AccordionTrigger>
-                          <AccordionContent className="pt-4">
+                          <AccordionContent className="pt-4 max-h-[300px] overflow-y-auto no-scrollbar">
                               <p className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed italic">" {essayResult.professorFeedback} "</p>
                           </AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="rewrite" className="border-none">
                           <AccordionTrigger className="h-12 bg-slate-900 text-white px-5 rounded-2xl hover:no-underline font-bold text-xs">Masterclass Rewrite</AccordionTrigger>
-                          <AccordionContent className="pt-4">
-                              <div className="bg-slate-900 text-white p-5 rounded-3xl text-[10px] leading-relaxed italic">{essayResult.suggestedRewrite}</div>
+                          <AccordionContent className="pt-4 max-h-[400px] overflow-y-auto no-scrollbar">
+                              <div className="bg-slate-900 text-white p-5 rounded-3xl text-[10px] leading-relaxed italic whitespace-pre-wrap">{essayResult.suggestedRewrite}</div>
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>

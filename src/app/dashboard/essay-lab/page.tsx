@@ -3,6 +3,7 @@
 import { useState, useRef } from "react"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useTheme } from "@/components/providers/ThemeProvider"
+import { auth } from "@/lib/firebase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -18,7 +19,9 @@ import {
   SendHorizontal, 
   Coins,
   Trophy,
-  CheckCircle2
+  CheckCircle2,
+  X,
+  ImageIcon
 } from "lucide-react"
 import { 
   Select, 
@@ -52,11 +55,37 @@ export default function WritingWizardPage() {
   const [chapterName, setChapterName] = useState("")
   const [essayText, setEssayText] = useState("")
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newFiles = [...uploadedImages, ...files].slice(0, 5);
+    setUploadedImages(newFiles);
+
+    const previews = newFiles.map(file => URL.createObjectURL(file));
+    setImagePreviews(previews);
+  };
+
+  const removeImage = (index: number) => {
+    const newFiles = uploadedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setUploadedImages(newFiles);
+    setImagePreviews(newPreviews);
+  };
 
   const handleEvaluate = async () => {
     if (!essayText.trim() && uploadedImages.length === 0) {
@@ -66,10 +95,13 @@ export default function WritingWizardPage() {
 
     setIsLoading(true)
     try {
+      const imageUris = await Promise.all(uploadedImages.map(file => fileToDataUri(file)));
+
       const evaluation = await evaluateEssayFeedback({
         topic: chapterName || "Self Practice Session",
         question: question,
-        essayText: essayText || "[Handwritten scanned photos provided]",
+        essayText: essayText,
+        imageUris: imageUris,
         academicLevel: academicLevel,
       })
 
@@ -134,11 +166,24 @@ export default function WritingWizardPage() {
           <Card className="border-none shadow-xl rounded-[32px] bg-white dark:bg-slate-900">
             <CardHeader className="p-8 pb-4"><CardTitle className="text-lg font-headline flex items-center gap-3"><div className="h-10 w-10 rounded-2xl bg-emerald-100 flex items-center justify-center"><BookOpen className="h-5 w-5 text-emerald-600" /></div>3: Submit</CardTitle></CardHeader>
             <CardContent className="p-8 pt-0 space-y-6">
-              <div onClick={() => fileInputRef.current?.click()} className="h-32 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-slate-50 dark:bg-slate-950">
-                <input type="file" className="hidden" ref={fileInputRef} onChange={(e) => { const files = Array.from(e.target.files || []); setUploadedImages(prev => [...prev, ...files].slice(0, 5)); }} accept="image/*" multiple />
+              <div onClick={() => fileInputRef.current?.click()} className="h-32 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-slate-50 dark:bg-slate-950 transition-colors">
+                <input type="file" className="hidden" ref={fileInputRef} onChange={handleImageSelection} accept="image/*" multiple />
                 <PlusCircle className="h-6 w-6 text-primary mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase">Upload Photos</p>
-                {uploadedImages.length > 0 && <p className="text-[9px] font-bold text-emerald-500 mt-1">{uploadedImages.length} images ready</p>}
               </div>
+
+              {imagePreviews.length > 0 && (
+                <div className="grid grid-cols-3 gap-3 py-2">
+                  {imagePreviews.map((preview, i) => (
+                    <div key={i} className="relative group aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 dark:border-slate-800">
+                      <img src={preview} alt="preview" className="w-full h-full object-cover" />
+                      <button onClick={(e) => { e.stopPropagation(); removeImage(i); }} className="absolute top-2 right-2 bg-destructive/90 text-white rounded-full p-1.5 shadow-lg">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <Textarea placeholder="OR type your answer here..." className="min-h-[150px] rounded-2xl p-5 bg-slate-50 dark:bg-slate-950 border-none dark:text-white text-sm" value={essayText} onChange={(e) => setEssayText(e.target.value)} />
               <Button onClick={handleEvaluate} disabled={isLoading} className="w-full h-14 rounded-2xl bg-primary text-white font-bold">
                 {isLoading ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <SendHorizontal className="h-5 w-5 mr-2" />}
