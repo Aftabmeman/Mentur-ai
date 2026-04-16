@@ -1,7 +1,8 @@
+
 'use server';
 /**
  * @fileOverview High-performance academic assessment generator using Groq llama-3.1-8b-instant.
- * Optimized for cost-efficiency and speed.
+ * Robust parsing added to prevent ERESOLVE type errors.
  */
 
 import { z } from 'zod';
@@ -29,9 +30,7 @@ const GenerateStudyAssessmentsInputSchema = z.object({
   assessmentTypes: z.array(z.enum(['MCQ', 'Flashcard', 'Essay', 'Mixed'])),
   academicLevel: z.string(),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']),
-  mcqCount: z.number().int().min(0).max(20).optional().default(5),
-  essayCount: z.number().int().min(0).max(10).optional().default(2),
-  flashcardCount: z.number().int().min(0).max(20).optional().default(5),
+  questionCount: z.number().int().min(10).max(30).optional().default(10),
 });
 export type GenerateStudyAssessmentsInput = z.infer<typeof GenerateStudyAssessmentsInputSchema>;
 
@@ -43,6 +42,17 @@ const GenerateStudyAssessmentsOutputSchema = z.object({
   error: z.string().optional(),
 });
 export type GenerateStudyAssessmentsOutput = z.infer<typeof GenerateStudyAssessmentsOutputSchema>;
+
+/** Robust JSON extraction */
+function extractJson(text: string) {
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error("Failed to parse AI response.");
+  }
+}
 
 export async function generateStudyAssessments(input: GenerateStudyAssessmentsInput): Promise<GenerateStudyAssessmentsOutput> {
   const apiKey = process.env.GROQ_API_KEY;
@@ -59,6 +69,7 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
   const systemPrompt = `You are a Senior Academic Content Developer.
 Generate content ONLY from the provided material using llama-3.1-8b-instant.
 LEVEL: ${input.academicLevel} | DIFFICULTY: ${input.difficulty}
+Target total items: ${input.questionCount}
 Return ONLY valid JSON.`;
 
   const userPrompt = `Material:
@@ -66,10 +77,8 @@ Return ONLY valid JSON.`;
 ${material}
 """
 
-Generate:
-- ${input.mcqCount} MCQs
-- ${input.essayCount} Essay Prompts
-- ${input.flashcardCount} Flashcards
+Generate exactly ${input.questionCount} items in total.
+Distribute them among: MCQs, Flashcards, and Essay Prompts based on types: ${input.assessmentTypes.join(', ')}.
 
 JSON Schema:
 {
@@ -99,13 +108,9 @@ JSON Schema:
     if (!response.ok) throw new Error("API Failure");
     
     const data = await response.json();
-    const content = JSON.parse(data.choices[0].message.content);
-    const usage = data.usage?.total_tokens || 0;
+    const content = extractJson(data.choices[0].message.content);
     
-    return GenerateStudyAssessmentsOutputSchema.parse({
-      ...content,
-      totalTokens: usage
-    });
+    return GenerateStudyAssessmentsOutputSchema.parse(content);
   } catch (error: any) {
     console.error("AI Generation Error:", error.message);
     return { error: "Failed to generate assessment. Try again." };

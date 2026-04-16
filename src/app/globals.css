@@ -64,7 +64,28 @@
   }
 }
 
-/* 3D Card Flip Helpers */
+/* MS Word Style Academic Editor - Strictly Text Only */
+.quill-premium {
+  @apply h-full flex flex-col w-full;
+}
+
+.quill-premium .ql-toolbar {
+  @apply border-none bg-slate-50 dark:bg-slate-800 py-4 px-6 rounded-t-[32px] sticky top-0 z-20 transition-colors border-b dark:border-slate-700 shadow-sm;
+}
+
+.quill-premium .ql-container {
+  @apply border-none text-base min-h-[500px] bg-white dark:bg-slate-900;
+}
+
+.quill-premium .ql-editor {
+  @apply p-8 leading-relaxed text-slate-800 dark:text-slate-100 font-body transition-colors text-lg;
+}
+
+.quill-premium .ql-editor.ql-blank::before {
+  @apply italic text-slate-400 left-8 text-lg;
+}
+
+/* 3D Card Helpers */
 .perspective-1000 {
   perspective: 1000px;
 }
@@ -82,11 +103,6 @@
   transform: rotateY(180deg);
 }
 
-.no-select {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -94,14 +110,4 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-@keyframes gradient-x {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-.animate-gradient-x {
-  background-size: 200% 200%;
-  animation: gradient-x 15s ease infinite;
 }

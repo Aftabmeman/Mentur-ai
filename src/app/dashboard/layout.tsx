@@ -60,23 +60,23 @@ export default function DashboardLayout({
       </main>
 
       {!hideNav && (
-        <nav className="fixed bottom-6 left-5 right-5 h-20 bg-white/90 dark:bg-slate-900/90 border border-white/20 dark:border-slate-800/20 backdrop-blur-3xl rounded-[32px] flex items-center justify-around px-2 z-50 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.3)]">
+        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-lg h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl rounded-[32px] flex items-center justify-around px-2 z-50 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.3)]">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={item.href} href={item.href} className="flex-1 flex flex-col items-center justify-center gap-1 group relative">
+              <Link key={item.href} href={item.href} className="flex-1 flex flex-col items-center justify-center gap-1 group relative h-full">
                 <div className={cn(
-                  "p-3 rounded-2xl transition-all duration-500",
+                  "p-3 rounded-2xl transition-all duration-300",
                   isActive ? "bg-primary text-white shadow-lg shadow-primary/30 -translate-y-2 scale-110" : "text-slate-400 hover:text-primary"
                 )}>
                   <item.icon className={cn("h-6 w-6", isActive ? "stroke-[2.5px]" : "stroke-2")} />
                 </div>
                 {!isActive ? (
-                  <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-400/80 transition-opacity">
+                  <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-400/80">
                     {item.label}
                   </span>
                 ) : (
-                  <div className="absolute -bottom-1 h-1 w-1 bg-primary rounded-full animate-in zoom-in-50" />
+                  <div className="absolute bottom-2 h-1 w-1 bg-primary rounded-full animate-in zoom-in-50" />
                 )}
               </Link>
             );
