@@ -15,7 +15,7 @@ import { MenturLogo } from "@/components/MenturLogo"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/accordion"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -100,7 +100,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Stats Section with Static Placeholders for Stability */}
       <div className="grid grid-cols-3 gap-4 px-2">
         {[
           { icon: Coins, label: "Coins", val: "0", color: "text-amber-500" },
