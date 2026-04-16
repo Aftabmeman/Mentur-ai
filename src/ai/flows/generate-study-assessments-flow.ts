@@ -1,8 +1,7 @@
 'use server';
 /**
- * @fileOverview High-performance academic assessment generator using Groq llama-3.3-70b.
- * Strictly generates content from provided material only.
- * Optimized for "Zero Rejection" even with small text inputs.
+ * @fileOverview High-performance academic assessment generator using Groq llama-3.1-8b-instant.
+ * Optimized for cost-efficiency and speed.
  */
 
 import { z } from 'zod';
@@ -51,28 +50,26 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
   if (!apiKey) return { error: "AI Key is missing." };
   
   if (input.studyMaterial.length < 30) {
-    return { error: "Content bahut chota hai. Please add at least a few lines to start." };
+    return { error: "Content is too short. Please add more details." };
   }
 
   let material = input.studyMaterial;
-  if (material.length > 12000) material = material.substring(0, 12000) + "...";
+  if (material.length > 8000) material = material.substring(0, 8000) + "...";
 
-  const systemPrompt = `You are a Senior Academic Content Developer at Mentur AI.
-STRICT RULE: Generate content ONLY from the provided material. Do NOT use external knowledge.
-If the material is very short, still extract the most meaningful academic concepts.
+  const systemPrompt = `You are a Senior Academic Content Developer.
+Generate content ONLY from the provided material using llama-3.1-8b-instant.
 LEVEL: ${input.academicLevel} | DIFFICULTY: ${input.difficulty}
-
-REQUIRED FORMATS:
-1. Generate ${input.mcqCount} MCQs (only if count > 0)
-2. Generate ${input.essayCount} Essay Prompts (only if count > 0)
-3. Generate ${input.flashcardCount} Flashcards (only if count > 0)
-
 Return ONLY valid JSON.`;
 
   const userPrompt = `Material:
 """
 ${material}
 """
+
+Generate:
+- ${input.mcqCount} MCQs
+- ${input.essayCount} Essay Prompts
+- ${input.flashcardCount} Flashcards
 
 JSON Schema:
 {
@@ -89,7 +86,7 @@ JSON Schema:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -99,11 +96,7 @@ JSON Schema:
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Groq API Error Details:", errorData);
-      throw new Error("API Failure");
-    }
+    if (!response.ok) throw new Error("API Failure");
     
     const data = await response.json();
     const content = JSON.parse(data.choices[0].message.content);
@@ -115,6 +108,6 @@ JSON Schema:
     });
   } catch (error: any) {
     console.error("AI Generation Error:", error.message);
-    return { error: "Failed to generate your learning journey. Please try again or check your content." };
+    return { error: "Failed to generate assessment. Try again." };
   }
 }

@@ -25,7 +25,8 @@ import {
   SendHorizontal,
   Coins,
   X,
-  Cpu
+  Cpu,
+  Type
 } from "lucide-react"
 import { 
   Select, 
@@ -54,6 +55,7 @@ import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useUser, useFirestore } from "@/firebase"
+import { incrementUserStats } from "@/firebase/non-blocking-updates"
 
 export const maxDuration = 60;
 
@@ -96,8 +98,6 @@ export default function AssessmentsPage() {
   const [mcqCorrectCount, setMcqCorrectCount] = useState(0)
 
   const [essayText, setEssayText] = useState("")
-  const [uploadedImages, setUploadedImages] = useState<File[]>([])
-  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isAnalyzingEssay, setIsAnalyzingEssay] = useState(false)
   const [essayResult, setEssayResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
 
@@ -106,7 +106,6 @@ export default function AssessmentsPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const essayImageInputRef = useRef<HTMLInputElement>(null)
 
   const playSuccessSound = () => {
     try {
@@ -115,32 +114,6 @@ export default function AssessmentsPage() {
       audio.play();
     } catch (e) { console.log(e); }
   }
-
-  const fileToDataUri = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const newFiles = [...uploadedImages, ...files].slice(0, 5);
-    setUploadedImages(newFiles);
-
-    // Create previews
-    const previews = newFiles.map(file => URL.createObjectURL(file));
-    setImagePreviews(previews);
-  };
-
-  const removeImage = (index: number) => {
-    const newFiles = uploadedImages.filter((_, i) => i !== index);
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    setUploadedImages(newFiles);
-    setImagePreviews(newPreviews);
-  };
 
   const handleModeCompletion = () => {
     if (!activeMode) return;
@@ -152,6 +125,10 @@ export default function AssessmentsPage() {
     let coinsEarned = 0;
     if (currentMode === 'MCQ') coinsEarned = mcqCorrectCount * 5;
     if (currentMode === 'Flashcard') coinsEarned = (result?.flashcards?.length || 0) * 2;
+
+    if (db && user?.uid && coinsEarned > 0) {
+      incrementUserStats(db, user.uid, coinsEarned, true);
+    }
 
     toast({ 
       title: `${currentMode} Completed!`, 
@@ -177,7 +154,7 @@ export default function AssessmentsPage() {
       formData.append('file', uploadedFile)
       const response = await extractTextFromPDF(formData)
       if (response.error) {
-        toast({ title: "Scan Failed", description: "Oops! Hum ye PDF theek se nahi padh paaye. Try another one?", variant: "destructive" })
+        toast({ title: "Scan Failed", description: "Oops! Hum ye PDF theek se nahi padh paaye.", variant: "destructive" })
       } else if (response.text) {
         setMaterial(response.text)
         toast({ title: "Resource Ingested", description: `Successfully extracted content.` })
@@ -221,20 +198,17 @@ export default function AssessmentsPage() {
   }
 
   const handleEssayAnalysis = async () => {
-    if (!essayText.trim() && uploadedImages.length === 0) {
-      toast({ title: "Content Missing", description: "Please type or upload your work.", variant: "destructive" })
+    if (!essayText.trim()) {
+      toast({ title: "Content Missing", description: "Please type your answer.", variant: "destructive" })
       return
     }
 
     setIsAnalyzingEssay(true)
     try {
-      const imageUris = await Promise.all(uploadedImages.map(file => fileToDataUri(file)));
-
       const evaluation = await evaluateEssayFeedback({
-        topic: "Journey Practice Session",
+        topic: "Practice Session",
         question: result?.essayPrompts?.[currentIdx]?.prompt || "General Essay",
         essayText: essayText,
-        imageUris: imageUris,
         academicLevel: level,
       })
 
@@ -242,6 +216,9 @@ export default function AssessmentsPage() {
         toast({ title: "Analysis Failed", description: evaluation.error, variant: "destructive" })
       } else {
         setEssayResult(evaluation)
+        if (db && user?.uid && evaluation.evaluationData.coinsEarned > 0) {
+          incrementUserStats(db, user.uid, evaluation.evaluationData.coinsEarned, true);
+        }
         playSuccessSound()
         confetti({ particleCount: 100, spread: 60, origin: { y: 0.8 } })
       }
@@ -282,8 +259,6 @@ export default function AssessmentsPage() {
     setIsCardFlipped(false)
     setEssayResult(null)
     setEssayText("")
-    setUploadedImages([])
-    setImagePreviews([])
     setMcqCorrectCount(0)
   }
 
@@ -320,7 +295,7 @@ export default function AssessmentsPage() {
         </div>
         <div className="text-center space-y-2">
            <h2 className="text-3xl font-black font-headline text-slate-900 dark:text-white">Journey Created!</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-medium">Your Master Professor is ready to evaluate you.</p>
+           <p className="text-slate-500 dark:text-slate-400 font-medium">Llama-3.1 Optimized Experience</p>
         </div>
       </div>
     )
@@ -334,13 +309,13 @@ export default function AssessmentsPage() {
             <div className="h-20 w-20 bg-amber-100 dark:bg-amber-900/20 rounded-[28px] flex items-center justify-center mx-auto">
               <Info className="h-10 w-10 text-amber-600" />
             </div>
-            <AlertDialogTitle className="text-2xl font-black font-headline text-slate-900 dark:text-white">Dekho, sach bolna!</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl font-black font-headline text-slate-900 dark:text-white">Honesty Policy</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-600 dark:text-slate-400 font-medium text-lg leading-relaxed">
-              Jhoot bologe toh tumhara hi nuksan hoga. Main kisi ko batane wala nahi hoon, par khud se honesty rakhoge toh hi seekh paoge. Ready?
+              Self-reflection is the key to mastery. Be honest with your recall.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8">
-            <AlertDialogAction onClick={confirmFlashcards} className="w-full h-16 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-primary/90">Haan, I'm Ready!</AlertDialogAction>
+            <AlertDialogAction onClick={confirmFlashcards} className="w-full h-16 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-primary/90">I'm Ready!</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -348,7 +323,7 @@ export default function AssessmentsPage() {
       <div className="px-1 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">Learning Journey</h1>
-          <p className="text-xs text-muted-foreground mt-1">Master Professor & Evaluator Mode</p>
+          <p className="text-xs text-muted-foreground mt-1">Llama-3.1-8b-instant Engine</p>
         </div>
       </div>
 
@@ -371,7 +346,7 @@ export default function AssessmentsPage() {
                   <TabsContent value="paste">
                     <Textarea 
                       className="min-h-[220px] rounded-2xl bg-slate-50 dark:bg-slate-950 border-none p-5 text-sm dark:text-white"
-                      placeholder="Paste your study materials here (min 30 chars)..."
+                      placeholder="Paste your study materials here..."
                       value={material}
                       onChange={(e) => setMaterial(e.target.value)}
                     />
@@ -505,34 +480,25 @@ export default function AssessmentsPage() {
             {activeMode === 'Essay' && result?.essayPrompts && (
               <Card className="border-none shadow-2xl rounded-[40px] bg-white dark:bg-slate-900 p-8 flex flex-col space-y-6 overflow-hidden">
                 <div className="flex-1 overflow-y-auto no-scrollbar space-y-6">
-                  <Badge className="bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 border-none font-black text-[10px]">MASTER PROFESSOR'S CHALLENGE</Badge>
+                  <Badge className="bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 border-none font-black text-[10px]">EXPERT EVALUATOR</Badge>
                   <h2 className="text-xl font-black font-headline text-slate-900 dark:text-white leading-tight">{result.essayPrompts[currentIdx]?.prompt}</h2>
                   
                   {!essayResult ? (
                     <div className="space-y-6">
-                      <div onClick={() => essayImageInputRef.current?.click()} className="h-28 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-slate-50 dark:bg-slate-950 transition-colors">
-                        <input type="file" className="hidden" ref={essayImageInputRef} onChange={handleImageSelection} accept="image/*" multiple />
-                        <PlusCircle className="h-6 w-6 text-primary mb-2" />
-                        <p className="text-[10px] font-bold text-slate-500 uppercase">Upload Handwritten Photos</p>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                          <Type className="h-3 w-3" /> Academic Submission Area
+                        </label>
+                        <Textarea 
+                          placeholder="Type your detailed response here... ( llama-3.1-8b optimized )" 
+                          className="min-h-[250px] rounded-2xl p-6 bg-slate-50 dark:bg-slate-950 border-none dark:text-white text-sm leading-relaxed" 
+                          value={essayText} 
+                          onChange={(e) => setEssayText(e.target.value)} 
+                        />
                       </div>
-
-                      {imagePreviews.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2 py-2">
-                          {imagePreviews.map((preview, i) => (
-                            <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border">
-                              <img src={preview} alt="preview" className="w-full h-full object-cover" />
-                              <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <Textarea placeholder="OR type your answer here..." className="min-h-[120px] rounded-2xl p-4 bg-slate-50 dark:bg-slate-950 border-none dark:text-white text-xs" value={essayText} onChange={(e) => setEssayText(e.target.value)} />
-                      <Button onClick={handleEssayAnalysis} disabled={isAnalyzingEssay} className="w-full h-14 rounded-2xl bg-primary text-white font-bold">
-                        {isAnalyzingEssay ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <SendHorizontal className="h-5 w-5 mr-2" />}
-                        Submit for Evaluation
+                      <Button onClick={handleEssayAnalysis} disabled={isAnalyzingEssay} className="w-full h-16 rounded-3xl bg-primary text-white font-black shadow-xl">
+                        {isAnalyzingEssay ? <Loader2 className="animate-spin h-6 w-6 mr-2" /> : <SendHorizontal className="h-6 w-6 mr-2" />}
+                        Evaluate Submission
                       </Button>
                     </div>
                   ) : (
@@ -562,13 +528,13 @@ export default function AssessmentsPage() {
                           </AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="rewrite" className="border-none">
-                          <AccordionTrigger className="h-12 bg-slate-900 text-white px-5 rounded-2xl hover:no-underline font-bold text-xs">Masterclass Rewrite</AccordionTrigger>
+                          <AccordionTrigger className="h-12 bg-slate-900 text-white px-5 rounded-2xl hover:no-underline font-bold text-xs">Suggested Improvements</AccordionTrigger>
                           <AccordionContent className="pt-4 max-h-[400px] overflow-y-auto no-scrollbar">
                               <div className="bg-slate-900 text-white p-5 rounded-3xl text-[10px] leading-relaxed italic whitespace-pre-wrap">{essayResult.suggestedRewrite}</div>
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
-                      <Button onClick={() => nextItem()} className="w-full h-14 rounded-2xl bg-primary text-white font-bold">Next Journey Step</Button>
+                      <Button onClick={() => nextItem()} className="w-full h-14 rounded-2xl bg-primary text-white font-bold">Next Question</Button>
                     </div>
                   )}
                 </div>
@@ -582,7 +548,7 @@ export default function AssessmentsPage() {
             <div className="bg-primary/10 h-16 w-16 rounded-2xl flex items-center justify-center mx-auto"><Sparkles className="h-8 w-8 text-primary" /></div>
             <div>
               <h2 className="text-2xl font-black font-headline text-slate-900 dark:text-white">Journey Ready</h2>
-              <p className="text-xs text-slate-500 font-medium">Profile: {level} | Professor: Active</p>
+              <p className="text-xs text-slate-500 font-medium">Model: llama-3.1-8b-instant</p>
             </div>
             
             <div className="grid grid-cols-1 gap-3">
@@ -605,7 +571,7 @@ export default function AssessmentsPage() {
             {result?.totalTokens && (
               <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">
                 <Cpu className="h-3 w-3" />
-                Engine Stats: {result.totalTokens} Tokens Used
+                Performance: {result.totalTokens} Tokens
               </div>
             )}
 
