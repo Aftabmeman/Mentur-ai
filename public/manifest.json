@@ -20,13 +20,13 @@
       "purpose": "maskable"
     },
     {
-      "src": "/icons/512x512.webp",
+      "src": "/icons/512x512.png",
       "sizes": "512x512",
-      "type": "image/webp",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/512x512.webp",
+      "src": "/icons/512x512.png",
       "sizes": "512x512",
       "type": "image/webp",
       "purpose": "maskable"

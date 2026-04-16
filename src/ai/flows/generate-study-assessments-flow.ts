@@ -30,7 +30,7 @@ const GenerateStudyAssessmentsInputSchema = z.object({
   assessmentTypes: z.array(z.enum(['MCQ', 'Flashcard', 'Essay', 'Mixed'])),
   academicLevel: z.string(),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']),
-  questionCount: z.number().int().min(10).max(30).optional().default(10),
+  questionCount: z.number().int().min(1).max(30).optional().default(10),
 });
 export type GenerateStudyAssessmentsInput = z.infer<typeof GenerateStudyAssessmentsInputSchema>;
 
