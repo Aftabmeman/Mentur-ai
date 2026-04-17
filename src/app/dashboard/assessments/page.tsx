@@ -396,24 +396,33 @@ export default function AssessmentsPage() {
           </div>
 
           {activeMode === 'MCQ' && result?.mcqs && (
-            <Card className="border-none shadow-2xl rounded-[1.8rem] sm:rounded-[2rem] bg-white dark:bg-slate-900 p-5 sm:p-10 flex flex-col space-y-6 min-h-[380px] sm:min-h-[400px] relative overflow-hidden">
+            <Card className="border-none shadow-2xl rounded-[1.8rem] sm:rounded-[2rem] bg-white dark:bg-slate-900 p-5 sm:p-8 flex flex-col space-y-6 min-h-[380px] sm:min-h-[400px] relative overflow-hidden">
               <div className="space-y-6 flex-1">
                 <div className="h-1 bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
                    <div className="h-full bg-primary transition-all duration-1000 ease-out" style={{ width: `${((currentIdx + 1) / result.mcqs.length) * 100}%` }} />
                 </div>
                 <h2 className="text-base sm:text-2xl font-black font-headline text-slate-900 dark:text-white leading-relaxed text-balance">{result.mcqs[currentIdx]?.question}</h2>
-                <div className="grid grid-cols-1 gap-2 sm:gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   {result.mcqs[currentIdx]?.options?.map((opt, i) => (
-                    <Button key={i} variant="outline" onClick={() => { setIsAnswerRevealed(true); if (opt === result.mcqs![currentIdx].correctAnswer) setMcqCorrectCount(prev => prev + 1); }} disabled={isAnswerRevealed} className={cn("h-auto min-h-[48px] sm:min-h-[60px] justify-start px-4 sm:px-6 py-2.5 sm:py-3 rounded-[1rem] sm:rounded-[1.2rem] border-none text-left font-black w-full transition-all text-xs sm:text-base", isAnswerRevealed ? (opt === result.mcqs![currentIdx].correctAnswer ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-400 shadow-[0_0_0_2px_rgba(16,185,129,0.3)]" : "opacity-40 bg-slate-50 dark:bg-slate-950") : "bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-inner")}>
-                       <span className="shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded bg-white dark:bg-slate-800 flex items-center justify-center mr-3 text-[8px] font-black border border-slate-100 dark:border-white/10">{String.fromCharCode(65 + i)}</span>
-                       <span className="flex-1">{opt}</span>
+                    <Button 
+                      key={i} 
+                      variant="outline" 
+                      onClick={() => { setIsAnswerRevealed(true); if (opt === result.mcqs![currentIdx].correctAnswer) setMcqCorrectCount(prev => prev + 1); }} 
+                      disabled={isAnswerRevealed} 
+                      className={cn(
+                        "flex h-auto min-h-[52px] sm:min-h-[64px] items-start justify-start rounded-[1.2rem] border-none px-4 py-3.5 text-left font-bold transition-all sm:px-6 sm:py-4 w-full !whitespace-normal leading-snug", 
+                        isAnswerRevealed ? (opt === result.mcqs![currentIdx].correctAnswer ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-400 shadow-[0_0_0_2px_rgba(16,185,129,0.3)]" : "opacity-40 bg-slate-50 dark:bg-slate-950") : "bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-inner"
+                      )}
+                    >
+                       <span className="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center mr-3 text-[10px] sm:text-xs font-black border border-slate-100 dark:border-white/10">{String.fromCharCode(65 + i)}</span>
+                       <span className="flex-1 pr-2 pt-0.5 text-sm sm:text-base">{opt}</span>
                     </Button>
                   ))}
                 </div>
               </div>
               {isAnswerRevealed && (
                 <div className="pt-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="p-4 sm:p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-[1rem] sm:rounded-[1.2rem] border border-emerald-100 dark:border-emerald-800/50 text-[11px] sm:text-base text-emerald-800 dark:text-emerald-300 font-medium leading-relaxed shadow-inner italic">
+                  <div className="p-4 sm:p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-[1.2rem] border border-emerald-100 dark:border-emerald-800/50 text-[11px] sm:text-base text-emerald-800 dark:text-emerald-300 font-medium leading-relaxed shadow-inner italic">
                     <p className="font-black mb-1 uppercase tracking-[0.4em] text-[7px] text-emerald-600 not-italic">Mentor's Perspective</p>
                     {result.mcqs[currentIdx].explanation}
                   </div>
@@ -465,7 +474,7 @@ export default function AssessmentsPage() {
                 <div className="space-y-8 pb-20 animate-in zoom-in-95 duration-1000">
                   <div className="text-center space-y-4 mb-4">
                      <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black uppercase text-[8px] tracking-[0.4em] px-6 py-2 rounded-full shadow-lg">Scholar Report Card</Badge>
-                     <div className="relative h-40 w-40 sm:h-56 sm:w-56 flex items-center justify-center mx-auto">
+                     <div className="relative h-44 w-44 sm:h-56 sm:w-56 flex items-center justify-center mx-auto">
                         <svg className="h-full w-full rotate-[-90deg]" viewBox="0 0 192 192">
                           <circle cx="96" cy="96" r="86" fill="transparent" stroke="currentColor" strokeWidth="16" className="text-slate-50 dark:text-slate-800" />
                           <circle cx="96" cy="96" r="86" fill="transparent" stroke="currentColor" strokeWidth="16" strokeDasharray="540.35" strokeDashoffset={540.35 - (540.35 * (essayResult?.evaluationData?.overallScore || 0)) / 100} strokeLinecap="round" className="text-primary transition-all duration-[2.5s] ease-out" />
@@ -506,7 +515,7 @@ export default function AssessmentsPage() {
                     ))}
                   </div>
 
-                  <div className="p-5 sm:p-6 bg-primary/5 rounded-[1.2rem] sm:rounded-[1.5rem] italic text-sm sm:text-2xl text-slate-700 dark:text-slate-100 leading-relaxed border-l-4 border-primary shadow-inner text-balance">
+                  <div className="p-5 sm:p-6 bg-primary/5 rounded-[1.2rem] sm:rounded-[1.5rem] italic text-sm sm:text-lg text-slate-700 dark:text-slate-100 leading-relaxed border-l-4 border-primary shadow-inner text-balance">
                     " {essayResult.professorFeedback} "
                   </div>
 
