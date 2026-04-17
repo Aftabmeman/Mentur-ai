@@ -30,7 +30,7 @@ git push -u origin main
 
 ## Core Features
 - **Sequential Assessment Wizard**: 4-step process to generate MCQs, Flashcards, and Essays.
-- **Multi-Format Parsing**: Professional support for PDF, DOCX, and TXT uploads.
+- **Multi-Format Parsing**: Elite support for PDF, DOCX, and TXT uploads via server actions.
 - **Dynamic Limits**: 1 to 5 questions for Essay practice; 10 to 30 for objective modes.
 - **Professional Exam Report Card**: Animated Score Circle with deep metrics (Grammar, Depth, Relevancy).
 - **Regional Mix Support**: Mentorship in 10 language styles (Hinglish, Marathish, etc.) with an energetic "Baval" tone.

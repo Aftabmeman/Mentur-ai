@@ -4,7 +4,6 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { 
   Type, 
   Loader2, 
@@ -14,9 +13,7 @@ import {
   BookOpen, 
   SendHorizontal, 
   Coins,
-  Sparkles,
   AlertCircle,
-  Activity,
   Trophy,
   Zap,
   Target,
@@ -66,7 +63,6 @@ export default function WritingWizardPage() {
   const [step, setStep] = useState(1)
   const [question, setQuestion] = useState("")
   const [academicLevel, setAcademicLevel] = useState<string>("Class 10th")
-  const [chapterName, setChapterName] = useState("")
   const [essayText, setEssayText] = useState("")
   const [preferredLanguage, setPreferredLanguage] = useState("English")
   
@@ -88,7 +84,7 @@ export default function WritingWizardPage() {
     setIsLoading(true)
     try {
       const evaluation = await evaluateEssayFeedback({
-        topic: chapterName || "Self Practice",
+        topic: "Self Practice",
         question: question,
         essayText: essayText,
         academicLevel: academicLevel,
@@ -113,103 +109,103 @@ export default function WritingWizardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full space-y-6 pb-28 animate-in fade-in duration-500">
+    <div className="flex flex-col h-full space-y-12 pb-40 animate-in fade-in duration-700 px-4">
       <div className="px-1 text-center">
-        <h1 className="text-3xl font-black font-headline tracking-tight text-slate-900 dark:text-white uppercase">Writing Lab</h1>
-        <p className="text-[10px] font-black text-muted-foreground mt-1 tracking-[0.2em] uppercase tracking-widest">Focus & Mastery</p>
+        <h1 className="text-3xl sm:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase leading-tight">Writing Lab</h1>
+        <p className="text-[11px] font-black text-slate-400 mt-4 tracking-[0.4em] uppercase">Focus & Mastery</p>
       </div>
 
-      <div className="flex-1 space-y-6">
+      <div className="flex-1">
         {step === 1 && (
-          <Card className="border-none shadow-2xl rounded-[40px] bg-white dark:bg-slate-900 overflow-hidden animate-in slide-in-from-bottom-4">
-            <CardHeader className="p-10 pb-4 text-center">
-              <div className="h-16 w-16 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Type className="h-8 w-8 text-primary" />
+          <Card className="border-none shadow-3xl rounded-[3rem] bg-white dark:bg-slate-900 overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
+            <CardHeader className="p-10 sm:p-20 pb-8 text-center">
+              <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center mx-auto mb-8 shadow-sm">
+                <Type className="h-10 w-10 text-primary" />
               </div>
-              <CardTitle className="text-xl font-black font-headline">Practice Question</CardTitle>
+              <CardTitle className="text-3xl font-black font-headline tracking-tight">Practice Question</CardTitle>
             </CardHeader>
-            <CardContent className="p-10 pt-0 space-y-6 text-center">
+            <CardContent className="p-10 sm:p-20 pt-0 space-y-10 text-center">
               <textarea 
                 placeholder="Type the question or prompt you are practicing today..." 
-                className="w-full min-h-[180px] rounded-[32px] p-8 text-sm dark:bg-slate-950 border-none bg-slate-50 dark:text-white resize-none leading-relaxed outline-none focus:ring-4 focus:ring-primary/5 transition-all" 
+                className="w-full min-h-[300px] rounded-[2.5rem] p-10 text-xl dark:bg-slate-950 border-none bg-slate-50 dark:text-white resize-none leading-relaxed outline-none shadow-inner placeholder:text-slate-200 dark:placeholder:text-slate-800" 
                 value={question} 
                 onChange={(e) => setQuestion(e.target.value)} 
               />
-              <Button onClick={() => setStep(2)} disabled={!question.trim()} className="w-full h-16 rounded-[24px] bg-primary text-white font-bold text-lg">
-                Next <ChevronRight className="ml-2 h-6 w-6" />
+              <Button onClick={() => setStep(2)} disabled={!question.trim()} className="w-full h-20 rounded-[1.8rem] bg-primary text-white font-black text-2xl shadow-3xl active:scale-95 transition-all">
+                Continue <ChevronRight className="ml-3 h-8 w-8" />
               </Button>
             </CardContent>
           </Card>
         )}
 
         {step === 2 && (
-          <Card className="border-none shadow-2xl rounded-[40px] bg-white dark:bg-slate-900 overflow-hidden animate-in slide-in-from-bottom-4">
-            <CardHeader className="p-10 pb-4 text-center">
-              <div className="h-16 w-16 rounded-3xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center mx-auto mb-4">
-                <GraduationCap className="h-8 w-8 text-amber-600" />
+          <Card className="border-none shadow-3xl rounded-[3rem] bg-white dark:bg-slate-900 overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
+            <CardHeader className="p-10 sm:p-20 pb-8 text-center">
+              <div className="h-20 w-20 rounded-[2rem] bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center mx-auto mb-8">
+                <GraduationCap className="h-10 w-10 text-amber-600" />
               </div>
-              <CardTitle className="text-xl font-black font-headline">Study Profile</CardTitle>
+              <CardTitle className="text-3xl font-black font-headline tracking-tight">Study Profile</CardTitle>
             </CardHeader>
-            <CardContent className="p-10 pt-0 space-y-8">
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">Academic Level</label>
+            <CardContent className="p-10 sm:p-20 pt-0 space-y-12">
+              <div className="space-y-10">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 px-6">Academic Level</label>
                   <Select value={academicLevel} onValueChange={setAcademicLevel}>
-                    <SelectTrigger className="h-16 rounded-[24px] bg-slate-50 dark:bg-slate-950 border-none font-bold text-slate-700 dark:text-white">
+                    <SelectTrigger className="h-20 rounded-[2rem] bg-slate-50 dark:bg-slate-950 border-none font-black text-xl px-12 shadow-inner">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[24px]">
-                      {academicLevels.map(lvl => <SelectItem key={lvl} value={lvl}>{lvl}</SelectItem>)}
+                    <SelectContent className="rounded-[2rem] border-none shadow-3xl">
+                      {academicLevels.map(lvl => <SelectItem key={lvl} value={lvl} className="h-18 font-black text-lg">{lvl}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">Feedback Style Mix</label>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 px-6">Feedback Style Mix</label>
                   <Select value={preferredLanguage} onValueChange={setPreferredLanguage}>
-                    <SelectTrigger className="h-16 rounded-[24px] bg-slate-50 dark:bg-slate-950 border-none font-bold text-slate-700 dark:text-white">
+                    <SelectTrigger className="h-20 rounded-[2rem] bg-slate-50 dark:bg-slate-950 border-none font-black text-xl px-12 shadow-inner">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[24px]">
-                      {languages.map(lvl => <SelectItem key={lvl} value={lvl}>{lvl}</SelectItem>)}
+                    <SelectContent className="rounded-[2rem] border-none shadow-3xl">
+                      {languages.map(lvl => <SelectItem key={lvl} value={lvl} className="h-18 font-black text-lg">{lvl}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <Button variant="ghost" onClick={() => setStep(1)} className="h-16 w-16 rounded-[24px] bg-slate-50 dark:bg-slate-800 shrink-0"><ChevronLeft className="h-6 w-6" /></Button>
-                <Button onClick={() => setStep(3)} className="flex-1 h-16 rounded-[24px] bg-primary text-white font-bold text-lg">Start Writing <ChevronRight className="ml-2 h-6 w-6" /></Button>
+              <div className="flex gap-4 pt-10">
+                <Button variant="ghost" onClick={() => setStep(1)} className="h-20 w-20 rounded-[2rem] bg-slate-50 dark:bg-slate-800 shrink-0 shadow-sm"><ChevronLeft className="h-10 w-10" /></Button>
+                <Button onClick={() => setStep(3)} className="flex-1 h-20 rounded-[2rem] bg-primary text-white font-black text-2xl shadow-3xl active:scale-95 transition-all">Enter Lab <ChevronRight className="ml-3 h-8 w-8" /></Button>
               </div>
             </CardContent>
           </Card>
         )}
 
         {step === 3 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <Card className="border-none shadow-xl rounded-[48px] bg-white dark:bg-slate-900 overflow-hidden">
-              <CardHeader className="p-8 pb-4 flex flex-row items-center justify-between border-b border-slate-50 dark:border-slate-800">
-                <div className="flex items-center gap-3">
-                   <div className="h-10 w-10 rounded-2xl bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center"><BookOpen className="h-5 w-5 text-emerald-600" /></div>
-                   <CardTitle className="text-lg font-black font-headline">Scholar Editor</CardTitle>
+          <div className="space-y-10 animate-in fade-in slide-in-from-right-12 duration-1000">
+            <Card className="border-none shadow-3xl rounded-[3rem] bg-white dark:bg-slate-900 overflow-hidden border border-slate-100 dark:border-white/5">
+              <CardHeader className="p-10 sm:p-16 pb-8 flex flex-row items-center justify-between border-b border-slate-50 dark:border-white/5">
+                <div className="flex items-center gap-6">
+                   <div className="h-14 w-14 rounded-[1.8rem] bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center shadow-sm"><BookOpen className="h-8 w-8 text-emerald-600" /></div>
+                   <CardTitle className="text-2xl font-black font-headline tracking-tight">Scholar Editor</CardTitle>
                 </div>
-                <Badge variant="outline" className="rounded-full font-black text-[10px] uppercase tracking-widest border-emerald-500/20 text-emerald-600">Active Session</Badge>
+                <Badge variant="outline" className="rounded-full font-black text-[9px] uppercase tracking-[0.4em] border-emerald-500/40 text-emerald-600 px-8 py-3 bg-emerald-50/50">Active Session</Badge>
               </CardHeader>
-              <CardContent className="p-10 pt-10 space-y-6">
-                <div className="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-2xl border border-amber-100 dark:border-amber-800 flex items-start gap-3 mb-4">
-                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 leading-relaxed uppercase tracking-widest">
-                    Evaluation Style: {preferredLanguage}
+              <CardContent className="p-10 sm:p-20 pt-12 space-y-12">
+                <div className="bg-amber-50 dark:bg-amber-900/10 p-8 rounded-[2rem] border-none flex items-start gap-6 shadow-inner">
+                  <AlertCircle className="h-8 w-8 text-amber-600 mt-1" />
+                  <p className="text-[10px] font-black text-amber-700 dark:text-amber-400 leading-relaxed uppercase tracking-[0.4em]">
+                    Evaluation Mix Style: {preferredLanguage}
                   </p>
                 </div>
                 <textarea 
-                  className="w-full min-h-[500px] rounded-[40px] bg-slate-50 dark:bg-slate-950 border-4 border-transparent focus:border-primary/10 p-12 text-xl font-medium dark:text-white resize-none leading-relaxed transition-all outline-none shadow-inner"
-                  placeholder="Express your answer here..."
+                  className="w-full min-h-[500px] rounded-[3.5rem] bg-slate-50 dark:bg-slate-950 border-none p-12 sm:p-24 text-xl sm:text-2xl font-medium dark:text-white resize-none leading-loose transition-all outline-none shadow-inner placeholder:text-slate-100 dark:placeholder:text-slate-800"
+                  placeholder="Express your thesis here..."
                   value={essayText}
                   onChange={(e) => setEssayText(e.target.value)}
                 />
-                <div className="flex gap-4">
-                  <Button variant="ghost" onClick={() => setStep(2)} className="h-16 w-16 rounded-[24px] bg-slate-50 dark:bg-slate-800 shrink-0"><ChevronLeft className="h-6 w-6" /></Button>
-                  <Button onClick={handleEvaluate} disabled={isLoading} className="flex-1 h-16 rounded-[24px] bg-primary text-white font-bold text-lg">
-                    {isLoading ? <Loader2 className="animate-spin h-6 w-6 mr-3" /> : <SendHorizontal className="h-6 w-6 mr-3" />}
+                <div className="flex gap-4 pt-10">
+                  <Button variant="ghost" onClick={() => setStep(2)} className="h-20 w-20 rounded-[2rem] bg-slate-50 dark:bg-slate-800 shrink-0 shadow-sm"><ChevronLeft className="h-10 w-10" /></Button>
+                  <Button onClick={handleEvaluate} disabled={isLoading} className="flex-1 h-20 rounded-[2rem] bg-primary text-white font-black text-2xl shadow-3xl group active:scale-95 transition-all">
+                    {isLoading ? <Loader2 className="animate-spin h-8 w-8 mr-4" /> : <SendHorizontal className="h-8 w-8 mr-4 group-hover:translate-x-3 transition-transform" />}
                     Analyze Response
                   </Button>
                 </div>
@@ -219,76 +215,66 @@ export default function WritingWizardPage() {
         )}
 
         {step === 5 && result && (
-          <div className="space-y-6 pb-20 animate-in zoom-in-95 duration-500">
-            <Card className="border-none shadow-2xl rounded-[48px] p-8 sm:p-12 bg-white dark:bg-slate-900">
-              <div className="text-center mb-12">
-                 <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 mb-6 font-black uppercase text-[10px] tracking-widest">Exam Report Card</Badge>
-                 <h2 className="text-3xl font-black font-headline">Performance Insights</h2>
-              </div>
-
-              {/* Top Score Section */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-10 mb-12">
-                <div className="relative h-48 w-48 flex items-center justify-center">
+          <div className="space-y-10 pb-20 animate-in zoom-in-95 duration-1000">
+            {/* SCHOLAR REPORT CARD HEADER */}
+            <div className="text-center space-y-6 mb-8">
+               <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black uppercase text-[10px] tracking-[0.5em] px-12 py-4 rounded-full shadow-lg">Scholar Report Card</Badge>
+               <div className="relative h-64 w-64 flex items-center justify-center mx-auto">
                   <svg className="h-full w-full rotate-[-90deg]">
-                    <circle cx="96" cy="96" r="88" fill="transparent" stroke="currentColor" strokeWidth="12" className="text-slate-100 dark:text-slate-800" />
-                    <circle cx="96" cy="96" r="88" fill="transparent" stroke="currentColor" strokeWidth="12" strokeDasharray="552.92" strokeDashoffset={552.92 - (552.92 * result.evaluationData.overallScore) / 100} strokeLinecap="round" className="text-primary transition-all duration-1000" />
+                    <circle cx="128" cy="128" r="116" fill="transparent" stroke="currentColor" strokeWidth="20" className="text-slate-50 dark:text-slate-800" />
+                    <circle cx="128" cy="128" r="116" fill="transparent" stroke="currentColor" strokeWidth="20" strokeDasharray="728.85" strokeDashoffset={728.85 - (728.85 * result.evaluationData.overallScore) / 100} strokeLinecap="round" className="text-primary transition-all duration-[2.5s] ease-out shadow-[0_0_30px_rgba(147,51,234,0.4)]" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-5xl font-black text-slate-900 dark:text-white">{result.evaluationData.overallScore}%</span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Mastery</span>
+                    <span className="text-6xl font-black text-slate-900 dark:text-white">{result.evaluationData.overallScore}%</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-3">OVERALL SCORE</span>
                   </div>
-                </div>
-                
-                <div className="p-8 bg-amber-50 dark:bg-amber-900/10 rounded-[40px] border-2 border-amber-100 dark:border-amber-800 min-w-[240px]">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Coins className="h-6 w-6 text-amber-500" />
-                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Coins Earned</p>
+               </div>
+            </div>
+
+            {/* SCHOLAR REWARD BOX */}
+            <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-amber-500/20 flex items-center justify-between shadow-2xl">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em]">SCHOLAR REWARD</p>
+                <h3 className="text-6xl font-black text-amber-400">+{result.evaluationData.coinsEarned}</h3>
+              </div>
+              <div className="h-20 w-20 rounded-[1.8rem] bg-amber-600/20 flex items-center justify-center border border-amber-500/30">
+                <Coins className="h-10 w-10 text-amber-500" />
+              </div>
+            </div>
+
+            {/* METRIC INSIGHTS */}
+            <div className="grid grid-cols-1 gap-6">
+              {[
+                { label: "GRAMMAR ACCURACY", val: result.evaluationData.grammarScore, icon: Zap },
+                { label: "CONTENT DEPTH", val: result.evaluationData.contentDepthScore, icon: Trophy },
+                { label: "RELEVANCY SCORE", val: result.evaluationData.relevancyScore, icon: Target }
+              ].map((stat, i) => (
+                <div key={i} className="bg-slate-900/40 p-10 rounded-[2.5rem] border border-white/5 space-y-6 shadow-sm">
+                  <div className="flex justify-between items-center">
+                     <stat.icon className="h-6 w-6 text-slate-400" />
+                     <span className="text-3xl font-black text-white">{stat.val}%</span>
                   </div>
-                  <h2 className="text-6xl font-black text-amber-700 dark:text-amber-400">+{result.evaluationData.coinsEarned}</h2>
+                  <Progress value={stat.val} className="h-3 rounded-full bg-slate-800" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">{stat.label}</p>
                 </div>
-              </div>
+              ))}
+            </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-                {[
-                  { label: "Grammar Accuracy", val: result.evaluationData.grammarScore, icon: Zap },
-                  { label: "Content Quality", val: result.evaluationData.contentDepthScore, icon: Trophy },
-                  { label: "Answer Relevance", val: result.evaluationData.relevancyScore, icon: Target }
-                ].map((stat, i) => (
-                  <div key={i} className="p-6 bg-slate-50 dark:bg-slate-950 rounded-[32px] border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-4">
-                      <stat.icon className="h-5 w-5 text-slate-400" />
-                      <span className="text-lg font-black text-slate-900 dark:text-white">{stat.val}%</span>
-                    </div>
-                    <Progress value={stat.val} className="h-2 rounded-full" />
-                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-4">{stat.label}</p>
-                  </div>
-                ))}
+            {/* PROFESSOR REMARK */}
+            <div className="p-10 bg-slate-50 dark:bg-slate-800/50 rounded-[3rem] italic text-2xl sm:text-3xl text-slate-700 dark:text-slate-100 leading-[1.8] border-l-[16px] border-primary shadow-inner">
+               " {result.professorFeedback} "
+            </div>
+            
+            <div className="space-y-8">
+              <Badge className="bg-slate-900 text-white uppercase font-black text-[10px] tracking-[0.6em] px-12 py-5 rounded-full shadow-2xl">The Masterclass Answer</Badge>
+              <div className="p-10 bg-slate-900 dark:bg-black rounded-[4rem] text-slate-300 leading-relaxed text-xl sm:text-2xl italic whitespace-pre-wrap border border-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+                 {result.suggestedRewrite}
               </div>
+            </div>
 
-              {/* Professor Remark */}
-              <div className="space-y-4 mb-12">
-                <div className="flex items-center gap-2 px-4">
-                   <Globe className="h-4 w-4 text-primary" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mentor Remark ({preferredLanguage})</span>
-                </div>
-                <div className="p-10 bg-slate-50 dark:bg-slate-800 rounded-[40px] italic text-xl text-slate-700 dark:text-slate-200 leading-relaxed border-l-8 border-primary shadow-sm">
-                   " {result.professorFeedback} "
-                </div>
-              </div>
-              
-              {/* Masterclass Rewrite */}
-              <div className="space-y-4 mb-10">
-                <Badge className="bg-slate-900 text-white uppercase font-black text-[9px] px-4 py-1.5 rounded-full ml-4">Perfect Answer (Masterclass)</Badge>
-                <div className="p-10 bg-slate-900 dark:bg-black rounded-[40px] text-slate-300 leading-relaxed text-lg italic whitespace-pre-wrap border border-white/5">
-                   {result.suggestedRewrite}
-                </div>
-              </div>
-
-              <Button onClick={() => setStep(1)} className="w-full h-20 rounded-[32px] font-black text-xl bg-primary text-white">
-                New Practice Session
-              </Button>
-            </Card>
+            <Button onClick={() => setStep(1)} className="w-full h-24 rounded-[3rem] font-black text-3xl bg-primary text-white shadow-3xl hover:bg-primary/90 transition-all active:scale-95 shadow-primary/30">
+              New Practice Session
+            </Button>
           </div>
         )}
       </div>
