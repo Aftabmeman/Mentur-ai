@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview High-performance academic assessment generator using Groq llama-3.1-8b-instant.
- * Updated to support dynamic question counts from 1 to 30.
+ * Supports granular counts for mixed modes.
  */
 
 import { z } from 'zod';
@@ -30,7 +30,10 @@ const GenerateStudyAssessmentsInputSchema = z.object({
   assessmentTypes: z.array(z.enum(['MCQ', 'Flashcard', 'Essay', 'Mixed'])),
   academicLevel: z.string(),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']),
-  questionCount: z.number().int().min(1).max(30).optional().default(10),
+  questionCount: z.number().int().min(1).max(100).optional().default(10),
+  mcqCount: z.number().optional(),
+  flashcardCount: z.number().optional(),
+  essayCount: z.number().optional(),
 });
 export type GenerateStudyAssessmentsInput = z.infer<typeof GenerateStudyAssessmentsInputSchema>;
 
@@ -43,7 +46,6 @@ const GenerateStudyAssessmentsOutputSchema = z.object({
 });
 export type GenerateStudyAssessmentsOutput = z.infer<typeof GenerateStudyAssessmentsOutputSchema>;
 
-/** Robust JSON extraction */
 function extractJson(text: string) {
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -66,19 +68,21 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
   let material = input.studyMaterial;
   if (material.length > 8000) material = material.substring(0, 8000) + "...";
 
+  const isMixed = input.assessmentTypes.includes('Mixed');
+  const countInstruction = isMixed 
+    ? `Generate EXACTLY: ${input.mcqCount || 0} MCQs, ${input.flashcardCount || 0} Flashcards, and ${input.essayCount || 0} Essay Prompts.`
+    : `Generate EXACTLY ${input.questionCount} items of type ${input.assessmentTypes[0]}.`;
+
   const systemPrompt = `You are a Senior Academic Content Developer.
 Generate content ONLY from the provided material using llama-3.1-8b-instant.
 LEVEL: ${input.academicLevel} | DIFFICULTY: ${input.difficulty}
-Target total items: ${input.questionCount}
+${countInstruction}
 Return ONLY valid JSON.`;
 
   const userPrompt = `Material:
 """
 ${material}
 """
-
-Generate exactly ${input.questionCount} items in total.
-Distribute them among: MCQs, Flashcards, and Essay Prompts based on types: ${input.assessmentTypes.join(', ')}.
 
 JSON Schema:
 {

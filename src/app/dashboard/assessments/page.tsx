@@ -65,6 +65,12 @@ export default function AssessmentsPage() {
   const [level, setLevel] = useState<string>("Class 10th")
   const [questionType, setQuestionType] = useState<string>("Mixed")
   const [questionCount, setQuestionCount] = useState<number>(10)
+  
+  // Mixed Mode specific counts
+  const [mcqCount, setMcqCount] = useState<number>(10)
+  const [flashcardCount, setFlashcardCount] = useState<number>(10)
+  const [essayCount, setEssayCount] = useState<number>(1)
+
   const [difficulty, setDifficulty] = useState<string>("Medium")
   const [preferredLanguage, setPreferredLanguage] = useState("English")
   const [showLangConfirm, setShowLangConfirm] = useState(false)
@@ -92,7 +98,7 @@ export default function AssessmentsPage() {
   useEffect(() => {
     if (questionType === "Essay") {
       if (questionCount > 5) setQuestionCount(5);
-    } else {
+    } else if (questionType !== "Mixed") {
       if (questionCount < 10) setQuestionCount(10);
     }
   }, [questionType]);
@@ -130,10 +136,13 @@ export default function AssessmentsPage() {
     try {
       const assessments = await generateStudyAssessments({
         studyMaterial: material,
-        assessmentTypes: questionType === "Mixed" ? ["MCQ", "Essay", "Flashcard"] : [questionType as any],
+        assessmentTypes: questionType === "Mixed" ? ["MCQ", "Essay", "Flashcard", "Mixed"] : [questionType as any],
         academicLevel: level,
         difficulty: difficulty as any,
         questionCount: questionCount,
+        mcqCount: questionType === "Mixed" ? mcqCount : (questionType === "MCQ" ? questionCount : 0),
+        flashcardCount: questionType === "Mixed" ? flashcardCount : (questionType === "Flashcard" ? questionCount : 0),
+        essayCount: questionType === "Mixed" ? essayCount : (questionType === "Essay" ? questionCount : 0),
       })
       
       if (assessments.error) {
@@ -231,7 +240,7 @@ export default function AssessmentsPage() {
   return (
     <div className="flex flex-col h-full space-y-6 sm:space-y-10 pb-40 animate-in fade-in duration-700 px-4 max-w-2xl mx-auto">
       <div className="px-1 text-center pt-6 sm:pt-10">
-        <h1 className="text-2xl sm:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase leading-tight">Academic Practice</h1>
+        <h1 className="text-2xl sm:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase leading-tight text-balance">Academic Practice</h1>
         <p className="text-[9px] font-black text-slate-400 mt-2 tracking-[0.4em] uppercase">Sequential Mastery Wizard</p>
       </div>
 
@@ -330,27 +339,51 @@ export default function AssessmentsPage() {
             {step === 4 && (
               <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between px-1">
-                    <div className="space-y-1">
-                       <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary">Step 4: Intensity</label>
-                       <p className="text-base sm:text-xl font-medium text-slate-500 leading-relaxed">Set the scale.</p>
-                    </div>
-                    <Badge variant="secondary" className="rounded-[1rem] px-4 py-2 font-black text-lg sm:text-2xl text-primary bg-primary/10 border-none shadow-sm">{questionCount}</Badge>
+                  <div className="space-y-1">
+                     <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary">Step 4: Intensity</label>
+                     <p className="text-base sm:text-xl font-medium text-slate-500 leading-relaxed">Configure your set counts.</p>
                   </div>
-                  <div className="px-2 py-4">
-                    <Slider 
-                      value={[questionCount]} 
-                      onValueChange={(v) => setQuestionCount(v[0])} 
-                      min={questionType === "Essay" ? 1 : 10} 
-                      max={questionType === "Essay" ? 5 : 30} 
-                      step={1} 
-                      className="py-4" 
-                    />
-                    <div className="flex justify-between text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">
-                      <span>{questionType === "Essay" ? 1 : 10} Qs</span>
-                      <span>{questionType === "Essay" ? 5 : 30} Qs</span>
+                  
+                  {questionType === "Mixed" ? (
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black uppercase text-slate-400">MCQs</span>
+                          <Badge variant="secondary" className="rounded-lg">{mcqCount}</Badge>
+                        </div>
+                        <Slider value={[mcqCount]} onValueChange={(v) => setMcqCount(v[0])} min={10} max={20} step={1} />
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black uppercase text-slate-400">Flashcards</span>
+                          <Badge variant="secondary" className="rounded-lg">{flashcardCount}</Badge>
+                        </div>
+                        <Slider value={[flashcardCount]} onValueChange={(v) => setFlashcardCount(v[0])} min={10} max={20} step={1} />
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black uppercase text-slate-400">Essays</span>
+                          <Badge variant="secondary" className="rounded-lg">{essayCount}</Badge>
+                        </div>
+                        <Slider value={[essayCount]} onValueChange={(v) => setEssayCount(v[0])} min={1} max={5} step={1} />
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="px-2 py-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black uppercase text-slate-400">{questionType} Count</span>
+                        <Badge variant="secondary" className="rounded-[1rem] px-4 py-2 font-black text-lg sm:text-2xl text-primary bg-primary/10 border-none shadow-sm">{questionCount}</Badge>
+                      </div>
+                      <Slider 
+                        value={[questionCount]} 
+                        onValueChange={(v) => setQuestionCount(v[0])} 
+                        min={questionType === "Essay" ? 1 : 10} 
+                        max={questionType === "Essay" ? 5 : 30} 
+                        step={1} 
+                        className="py-4" 
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2 pt-4">
                   <Button onClick={handleGenerate} disabled={isLoading} className="w-full h-14 sm:h-18 rounded-[1.2rem] sm:rounded-[1.5rem] bg-primary hover:bg-primary/90 text-white font-black text-base sm:text-lg shadow-xl group">
@@ -422,7 +455,7 @@ export default function AssessmentsPage() {
               </div>
               {isAnswerRevealed && (
                 <div className="pt-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="p-4 sm:p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-[1.2rem] border border-emerald-100 dark:border-emerald-800/50 text-[11px] sm:text-base text-emerald-800 dark:text-emerald-300 font-medium leading-relaxed shadow-inner italic">
+                  <div className="p-4 sm:p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-[1.2rem] border border-emerald-100 dark:border-emerald-800/50 text-[11px] sm:text-base text-emerald-800 dark:text-emerald-300 font-medium leading-relaxed shadow-inner italic text-balance">
                     <p className="font-black mb-1 uppercase tracking-[0.4em] text-[7px] text-emerald-600 not-italic">Mentor's Perspective</p>
                     {result.mcqs[currentIdx].explanation}
                   </div>
@@ -530,12 +563,12 @@ export default function AssessmentsPage() {
       ) : (
         <Card className="border-none shadow-2xl rounded-[2rem] sm:rounded-[2.5rem] bg-white dark:bg-slate-900 p-8 sm:p-14 text-center space-y-8 animate-in zoom-in-95 duration-700">
           <div className="relative inline-block">
-            <div className="bg-primary/10 h-16 w-16 sm:h-28 sm:w-28 rounded-[1.2rem] sm:rounded-[1.8rem] flex items-center justify-center mx-auto relative z-10 shadow-lg">
-              <Sparkles className="h-6 w-6 sm:h-12 sm:w-12 text-primary" />
+            <div className="bg-primary/10 h-14 w-14 sm:h-20 sm:w-20 rounded-[1.2rem] sm:rounded-[1.5rem] flex items-center justify-center mx-auto relative z-10 shadow-lg">
+              <Sparkles className="h-6 w-6 sm:h-10 sm:w-10 text-primary" />
             </div>
           </div>
           <div className="space-y-3">
-            <h2 className="text-xl sm:text-4xl font-black font-headline tracking-tighter leading-tight">Intelligence Ready</h2>
+            <h2 className="text-xl sm:text-4xl font-black font-headline tracking-tighter leading-tight text-balance">Intelligence Ready</h2>
             <p className="text-slate-500 text-xs sm:text-xl font-medium leading-relaxed max-w-xs mx-auto text-balance">Your customized academic practice set is finalized.</p>
           </div>
           <div className="grid grid-cols-1 gap-3 max-w-sm mx-auto">
@@ -543,18 +576,23 @@ export default function AssessmentsPage() {
               { id: 'MCQ', icon: ListChecks, label: 'Objective MCQs', list: result?.mcqs, color: 'text-blue-500' },
               { id: 'Flashcard', icon: RotateCw, label: 'Active Recall', list: result?.flashcards, color: 'text-amber-500' },
               { id: 'Essay', icon: ClipboardList, label: 'Writing Lab', list: result?.essayPrompts, color: 'text-emerald-500' }
-            ].map((m) => m.list?.length ? (
-              <Button key={m.id} variant="outline" onClick={() => startMode(m.id as any)} className="h-14 sm:h-20 rounded-[1rem] sm:rounded-[1.8rem] justify-start px-4 sm:px-6 group relative overflow-hidden border-none bg-slate-50 dark:bg-slate-950 hover:bg-white transition-all active:scale-95">
-                <div className={cn("p-2 sm:p-3 rounded-lg bg-white dark:bg-slate-900 mr-3 sm:mr-4 shadow-sm group-hover:scale-110 transition-transform", m.color)}>
-                  <m.icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                </div>
-                <div className="text-left">
-                  <p className="font-black text-xs sm:text-lg">{m.list.length} {m.label}</p>
-                  <p className="text-[6px] sm:text-[7px] font-black text-slate-400 uppercase tracking-[0.4em] mt-0.5">Available Session</p>
-                </div>
-                {completedModes.includes(m.id) && <Check className="ml-auto h-5 w-5 sm:h-6 sm:w-6 text-emerald-500 animate-in zoom-in-50" />}
-              </Button>
-            ) : null)}
+            ].map((m) => {
+              const isSelected = questionType === "Mixed" || questionType === m.id;
+              if (!isSelected || !m.list?.length) return null;
+              
+              return (
+                <Button key={m.id} variant="outline" onClick={() => startMode(m.id as any)} className="h-14 sm:h-20 rounded-[1.2rem] sm:rounded-[1.8rem] justify-start px-4 sm:px-6 group relative overflow-hidden border-none bg-slate-50 dark:bg-slate-900/40 hover:bg-white transition-all active:scale-95">
+                  <div className={cn("p-2 sm:p-3 rounded-lg bg-white dark:bg-slate-900 mr-3 sm:mr-4 shadow-sm group-hover:scale-110 transition-transform", m.color)}>
+                    <m.icon className="h-4 w-4 sm:h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-black text-xs sm:text-lg">{m.list.length} {m.label}</p>
+                    <p className="text-[6px] sm:text-[7px] font-black text-slate-400 uppercase tracking-[0.4em] mt-0.5">Available Session</p>
+                  </div>
+                  {completedModes.includes(m.id) && <Check className="ml-auto h-5 w-5 sm:h-6 sm:w-6 text-emerald-500 animate-in zoom-in-50" />}
+                </Button>
+              )
+            })}
           </div>
           <Button onClick={() => { setStep(1); setResult(null); }} variant="ghost" className="w-full font-black text-[8px] uppercase tracking-[0.5em] text-slate-300 pt-6 hover:text-slate-500">
             Reset Session Wizard
