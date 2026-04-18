@@ -101,7 +101,7 @@ export default function AssessmentsPage() {
     } else if (questionType !== "Mixed") {
       if (questionCount < 10) setQuestionCount(10);
     }
-  }, [questionType]);
+  }, [questionType, questionCount]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
