@@ -15,13 +15,15 @@ export function initializeFirebase() {
      return { firebaseApp: null as any, auth: null as any, firestore: null as any };
   }
 
+  // Double check configuration existence to prevent 'no-options' error
   const hasConfig = !!firebaseConfig.apiKey && 
                     firebaseConfig.apiKey !== 'undefined' && 
                     firebaseConfig.apiKey.length > 10;
 
   if (!getApps().length) {
     if (!hasConfig) {
-      console.warn('Firebase configuration is missing. Initialization skipped for build safety.');
+      // Return dummy objects instead of throwing to keep build process alive
+      console.warn('Discate: Firebase configuration is missing. Initialization skipped for build safety.');
       return { firebaseApp: null as any, auth: null as any, firestore: null as any };
     }
 
@@ -29,7 +31,7 @@ export function initializeFirebase() {
       const firebaseApp = initializeApp(firebaseConfig);
       return getSdks(firebaseApp);
     } catch (e) {
-      console.warn('Firebase initialization failed:', e);
+      console.warn('Discate: Firebase initialization failed:', e);
       return { firebaseApp: null as any, auth: null as any, firestore: null as any };
     }
   }
