@@ -1,17 +1,28 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
 import { firebaseConfig } from "@/firebase/config";
 
 /**
- * Single source of truth for Firebase services.
- * Ensures only one instance of the Firebase app is initialized using a singleton pattern.
+ * Robust singleton for Firebase services.
+ * Prevents initialization errors during Next.js build/SSR by checking for environment and config.
  */
-const firebaseApp = getApps().length === 0 
-  ? initializeApp(firebaseConfig) 
-  : getApp();
+let firebaseApp: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let firestore: Firestore | undefined;
 
-const auth = getAuth(firebaseApp);
-const firestore = getFirestore(firebaseApp);
+const hasConfig = typeof window !== 'undefined' && 
+                  !!firebaseConfig.apiKey && 
+                  firebaseConfig.apiKey !== 'undefined';
+
+if (typeof window !== 'undefined' && hasConfig) {
+  if (getApps().length === 0) {
+    firebaseApp = initializeApp(firebaseConfig);
+  } else {
+    firebaseApp = getApp();
+  }
+  auth = getAuth(firebaseApp);
+  firestore = getFirestore(firebaseApp);
+}
 
 export { auth, firestore, firebaseApp };

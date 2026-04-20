@@ -10,8 +10,7 @@ import { getFirestore } from 'firebase/firestore'
  * Prevents crashes during static generation if API keys are not present.
  */
 export function initializeFirebase() {
-  // In Next.js App Router, some client components might execute on the server 
-  // during build or initial render. We guard against this.
+  // Guard against server-side execution during build or initial render.
   if (typeof window === 'undefined') {
      return { firebaseApp: null as any, auth: null as any, firestore: null as any };
   }
@@ -22,16 +21,15 @@ export function initializeFirebase() {
 
   if (!getApps().length) {
     if (!hasConfig) {
-      // Return empty services if no config is found to prevent build-time crashes.
+      console.warn('Firebase configuration is missing. Initialization skipped for build safety.');
       return { firebaseApp: null as any, auth: null as any, firestore: null as any };
     }
 
     try {
-      // Manual initialization with config object
       const firebaseApp = initializeApp(firebaseConfig);
       return getSdks(firebaseApp);
     } catch (e) {
-      console.warn('Firebase initialization failed during build fallback:', e);
+      console.warn('Firebase initialization failed:', e);
       return { firebaseApp: null as any, auth: null as any, firestore: null as any };
     }
   }
