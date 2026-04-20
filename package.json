@@ -5,7 +5,7 @@
   "description": "Discate | Elite Academic Mentorship platform powered by Generative AI",
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
-    "build": "npx @cloudflare/next-on-pages",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
