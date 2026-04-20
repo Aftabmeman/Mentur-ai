@@ -34,7 +34,7 @@ import { Progress } from "@/components/ui/progress"
 import { doc } from "firebase/firestore"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 const academicLevels = [
   "Class 8th", "Class 9th", "Class 10th", "Class 11th", "Class 12th",

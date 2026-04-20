@@ -35,7 +35,7 @@ import { incrementUserStats } from "@/firebase/non-blocking-updates"
 import { doc } from "firebase/firestore"
 import { Progress } from "@/components/ui/progress"
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 const academicLevels = [
   "Class 8th", "Class 9th", "Class 10th", "Class 11th", "Class 12th",
