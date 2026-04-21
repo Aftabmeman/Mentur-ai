@@ -1,8 +1,9 @@
+
 import { MetadataRoute } from 'next'
 
 /**
  * Dynamic sitemap generation for Discate.
- * Replaces the old mentur-ai.vercel.app domain with discate.com.
+ * This file helps search engines index the elite mentorship platform correctly.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://discate.com'

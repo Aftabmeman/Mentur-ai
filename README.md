@@ -3,26 +3,29 @@
 
 Discate is an advanced academic mentorship platform that leverages AI to generate personalized assessments and provide deep evaluation of student work.
 
-## GitHub & Deployment Instructions
+## 🚀 Critical Deployment Fixes (Read First)
 
-Follow these exact commands to sync your lockfile and push your code. This is required because Cloudflare uses `npm clean-install`, and Render also benefits from a clean state.
+### 1. Fix Email Verification 404
+If verification links point to an old URL, you **MUST** update the Firebase Console:
+- Go to **Firebase Console** -> **Authentication** -> **Templates** -> **Email Verification**.
+- Edit the template and set the **Action URL** to: `https://discate.com/auth/action`
+- Add `discate.com` to **Authorized Domains** in the Authentication settings tab.
 
-### 1. Sync Lockfile Locally
-Run this command in your local terminal:
+### 2. GitHub & Sync
+Follow these exact commands to sync your lockfile and push your code. This is required for stable Cloudflare/Render builds.
+
 ```bash
+# Sync Lockfile Locally
 npm install --legacy-peer-deps
-```
 
-### 2. Push to GitHub
-```bash
+# Push to GitHub
 git add .
-git commit -m "Fix: Forced CDN PDF worker for environment stability"
+git commit -m "Fix: Verification handler polished and sitemap cleaned"
 git push origin main
 ```
 
 ## Core Features
 - **Node.js Runtime**: Optimized for stability across Render and Cloudflare.
 - **Sequential Assessment Wizard**: 4-step process to generate MCQs, Flashcards, and Essays.
-- **Elite Multi-Format Parsing**: Support for PDF, DOCX, and TXT (Max 5MB).
 - **Scholar Report Card**: Animated Score Circle with deep metrics (Grammar, Depth, Relevancy).
 - **Regional Mix Support**: Mentorship in 10 language styles (Hinglish, Marathish, etc.) with an energetic "Baval" tone.
