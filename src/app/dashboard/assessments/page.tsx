@@ -60,6 +60,29 @@ const languages = [
   "Punjabish", "Tamilish", "Telugush", "Kannadish", "Malayalish"
 ];
 
+const honestyTranslations: Record<string, { title: string, desc: string, btn: string }> = {
+  "English": {
+    title: "Honesty is Mastery",
+    desc: "Flashcards are designed for active recall. If you flip a card and realize you didn't truly know the answer, be honest with yourself—click 'I Learned It'. Ready to be a true scholar?",
+    btn: "Begin Honestly"
+  },
+  "Hinglish": {
+    title: "Sachai hi Jeet hai",
+    desc: "Flashcards active recall ke liye bane hain. Agar card flip karne ke baad lage ki aapko answer sahi se nahi pata tha, toh 'I Learned It' choose karein. Khud se jhoot na bole. Shuru karein?",
+    btn: "Sachai se Shuru Karein"
+  },
+  "Hindi": {
+    title: "ईमानदारी ही श्रेष्ठता है",
+    desc: "फ्लैशकार्ड सक्रिय स्मरण के लिए डिज़ाइन किए गए हैं। यदि आप कार्ड पलटते हैं और महसूस करते हैं कि आप वास्तव में उत्तर नहीं जानते थे, तो अपने प्रति ईमानदार रहें—'मैंने यह सीखा' पर क्लिक करें। क्या आप तैयार हैं?",
+    btn: "ईमानदारी से शुरू करें"
+  },
+  "Marathish": {
+    title: "प्रामाणिकपणा म्हणजे प्रभुत्व",
+    desc: "फ्लॅशकार्ड्स सक्रिय आठवण्यासाठी डिझाइन केलेले आहेत. जर तुम्ही कार्ड फ्लिप केले आणि तुम्हाला उत्तर माहित नव्हते असे वाटले, तर स्वतःशी प्रामाणिक राहा—'मी हे शिकलो' वर क्लिक करा. तुम्ही तयार आहात का?",
+    btn: "प्रामाणिकपणे सुरुवात करा"
+  }
+};
+
 export default function AssessmentsPage() {
   const { user } = useUser()
   const db = useFirestore()
@@ -108,13 +131,7 @@ export default function AssessmentsPage() {
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (questionType === "Essay") {
-      if (questionCount > 5) setQuestionCount(5);
-    } else if (questionType !== "Mixed") {
-      if (questionCount < 10) setQuestionCount(10);
-    }
-  }, [questionType, questionCount]);
+  const hTranslate = honestyTranslations[profile?.preferredLanguage || "English"] || honestyTranslations["English"];
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -273,11 +290,9 @@ export default function AssessmentsPage() {
             <div className="h-16 w-16 bg-amber-100 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
               <Lightbulb className="h-8 w-8 text-amber-600" />
             </div>
-            <AlertDialogTitle className="text-2xl font-black font-headline text-center tracking-tight">Honesty is Mastery</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl font-black font-headline text-center tracking-tight">{hTranslate.title}</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-500 dark:text-slate-400 text-center text-base leading-relaxed">
-              Flashcards are designed for **active recall**. If you flip a card and realize you didn't truly know the answer, be honest with yourself—click **'I Learned It'**. 
-              <br/><br/>
-              Don't just chase points; chase real knowledge. Ready to be a true scholar?
+              {hTranslate.desc}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-6">
@@ -285,14 +300,14 @@ export default function AssessmentsPage() {
               onClick={() => launchMode('Flashcard')}
               className="w-full h-14 rounded-xl bg-primary text-white font-black text-lg shadow-xl hover:bg-primary/90 transition-all"
             >
-              Begin Honestly
+              {hTranslate.btn}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <div className="px-1 text-center pt-6 sm:pt-10">
-        <h1 className="text-2xl sm:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase leading-tight text-balance">Discate Practice</h1>
+        <h1 className="text-2xl sm:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase leading-tight text-balance text-center">Discate Practice</h1>
         <p className="text-[9px] font-black text-slate-400 mt-2 tracking-[0.4em] uppercase">Sequential Mastery Wizard</p>
       </div>
 
@@ -487,7 +502,7 @@ export default function AssessmentsPage() {
                 <div className="h-1 bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
                    <div className="h-full bg-primary transition-all duration-1000 ease-out" style={{ width: `${((currentIdx + 1) / result.mcqs.length) * 100}%` }} />
                 </div>
-                <h2 className="text-base sm:text-2xl font-black font-headline text-slate-900 dark:text-white leading-relaxed text-balance">{result.mcqs[currentIdx]?.question}</h2>
+                <h2 className="text-base sm:text-2xl font-black font-headline text-slate-900 dark:text-white leading-relaxed text-balance text-center">{result.mcqs[currentIdx]?.question}</h2>
                 <div className="grid grid-cols-1 gap-3">
                   {result.mcqs[currentIdx]?.options?.map((opt, i) => (
                     <Button 
@@ -508,7 +523,7 @@ export default function AssessmentsPage() {
               </div>
               {isAnswerRevealed && (
                 <div className="pt-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="p-4 sm:p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-[1.2rem] border border-emerald-100 dark:border-emerald-800/50 text-[11px] sm:text-base text-emerald-800 dark:text-emerald-300 font-medium leading-relaxed shadow-inner italic text-balance">
+                  <div className="p-4 sm:p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-[1.2rem] border border-emerald-100 dark:border-emerald-800/50 text-[11px] sm:text-base text-emerald-800 dark:text-emerald-300 font-medium leading-relaxed shadow-inner italic text-balance text-center">
                     <p className="font-black mb-1 uppercase tracking-[0.4em] text-[7px] text-emerald-600 not-italic">Discate's Perspective</p>
                     {result.mcqs[currentIdx].explanation}
                   </div>
@@ -524,23 +539,23 @@ export default function AssessmentsPage() {
             <div className="flex flex-col items-center space-y-8 w-full max-w-md mx-auto">
               <div className="perspective-1000 w-full min-h-[350px] sm:min-h-[400px] cursor-pointer" onClick={() => setIsAnswerRevealed(!isAnswerRevealed)}>
                 <div className={cn("relative w-full h-full min-h-[350px] sm:min-h-[400px] transition-all duration-700 preserve-3d shadow-3xl rounded-[2.5rem]", isAnswerRevealed ? "rotate-y-180" : "")}>
-                  <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center justify-center text-center border border-slate-100 dark:border-white/5 overflow-hidden">
-                    <Badge className="bg-primary/10 text-primary mb-6 font-black uppercase text-[8px] tracking-[0.4em] px-6 py-2 rounded-full shrink-0">Recall Prompt</Badge>
+                  <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 sm:p-10 flex flex-col items-center justify-center text-center border border-slate-100 dark:border-white/5 overflow-y-auto no-scrollbar">
+                    <Badge className="bg-primary/10 text-primary mb-4 font-black uppercase text-[8px] tracking-[0.4em] px-6 py-2 rounded-full shrink-0">Recall Prompt</Badge>
                     <div className="flex-1 flex items-center justify-center w-full">
-                       <h3 className="text-xl sm:text-3xl font-black font-headline text-slate-900 dark:text-white leading-tight text-wrap break-words">{result.flashcards[currentIdx]?.front}</h3>
+                       <h3 className="text-lg sm:text-2xl font-black font-headline text-slate-900 dark:text-white leading-tight text-wrap break-words">{result.flashcards[currentIdx]?.front}</h3>
                     </div>
                   </div>
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 bg-slate-950 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center justify-center text-center border border-white/5 overflow-hidden">
-                    <Badge className="bg-emerald-500/10 text-emerald-400 mb-6 font-black uppercase text-[8px] tracking-[0.4em] px-6 py-2 rounded-full shrink-0">Mastery Point</Badge>
+                  <div className="absolute inset-0 backface-hidden rotate-y-180 bg-slate-950 rounded-[2.5rem] p-6 sm:p-10 flex flex-col items-center justify-center text-center border border-white/5 overflow-y-auto no-scrollbar">
+                    <Badge className="bg-emerald-500/10 text-emerald-400 mb-4 font-black uppercase text-[8px] tracking-[0.4em] px-6 py-2 rounded-full shrink-0">Mastery Point</Badge>
                     <div className="flex-1 flex items-center justify-center w-full">
-                       <p className="text-base sm:text-2xl font-black text-slate-100 leading-relaxed italic text-wrap break-words">"{result.flashcards[currentIdx]?.back}"</p>
+                       <p className="text-sm sm:text-lg font-black text-slate-100 leading-relaxed italic text-wrap break-words">"{result.flashcards[currentIdx]?.back}"</p>
                     </div>
                   </div>
                 </div>
               </div>
               
               {isAnswerRevealed && (
-                <div className="w-full flex gap-3 animate-in fade-in zoom-in-95 duration-500">
+                <div className="w-full flex gap-3 animate-in fade-in zoom-in-95 duration-500 px-4">
                   <Button 
                     onClick={() => { nextItem(); }} 
                     variant="outline"
@@ -569,7 +584,7 @@ export default function AssessmentsPage() {
             <div className="flex flex-col space-y-6">
               <Card className="border-none shadow-xl rounded-[1.2rem] sm:rounded-[1.5rem] bg-white dark:bg-slate-900 p-5 sm:p-8 border border-slate-100 dark:border-white/5">
                 <Badge className="bg-primary/10 text-primary mb-3 font-black uppercase text-[7px] tracking-[0.4em] px-5 sm:px-6 py-1.5 sm:py-2 rounded-full">Writing Lab Prompt</Badge>
-                <h2 className="text-base sm:text-2xl font-black font-headline leading-relaxed text-slate-900 dark:text-white text-balance">{result.essayPrompts[currentIdx]?.prompt}</h2>
+                <h2 className="text-base sm:text-2xl font-black font-headline leading-relaxed text-slate-900 dark:text-white text-balance text-center">{result.essayPrompts[currentIdx]?.prompt}</h2>
               </Card>
               
               {!essayResult ? (
@@ -630,7 +645,7 @@ export default function AssessmentsPage() {
                     ))}
                   </div>
 
-                  <div className="p-5 sm:p-6 bg-primary/5 rounded-[1.2rem] sm:rounded-[1.5rem] italic text-sm sm:text-lg text-slate-700 dark:text-slate-100 leading-relaxed border-l-4 border-primary shadow-inner text-balance">
+                  <div className="p-5 sm:p-6 bg-primary/5 rounded-[1.2rem] sm:rounded-[1.5rem] italic text-sm sm:text-lg text-slate-700 dark:text-slate-100 leading-relaxed border-l-4 border-primary shadow-inner text-balance text-center">
                     " {essayResult.professorFeedback} "
                   </div>
 
