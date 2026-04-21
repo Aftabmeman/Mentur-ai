@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -522,7 +521,7 @@ export default function AssessmentsPage() {
                      <div className="relative h-44 w-44 sm:h-56 sm:w-56 flex items-center justify-center mx-auto">
                         <svg className="h-full w-full rotate-[-90deg]" viewBox="0 0 192 192">
                           <circle cx="96" cy="96" r="86" fill="transparent" stroke="currentColor" strokeWidth="16" className="text-slate-50 dark:text-slate-800" />
-                          <circle cx="96" cy="96" r="86" fill="transparent" stroke="currentColor" strokeWidth="16" strokeDasharray="540.35" strokeDashoffset={540.35 - (540.35 * (essayResult?.evaluationData?.overallScore || 0)) / 100} strokeLinecap="round" className="text-primary transition-all duration-700 ease-out" />
+                          <circle cx="96" cy="96" r="86" fill="transparent" stroke="currentColor" strokeWidth="16" strokeDasharray="540.35" strokeDashoffset={540.35 - (540.35 * (essayResult?.evaluationData?.overallScore || 0)) / 100} strokeLinecap="round" className="text-primary transition-all duration-1000 ease-out" />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                           <span className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white">{essayResult?.evaluationData?.overallScore || 0}%</span>

@@ -1,13 +1,13 @@
 'use server';
 
 import mammoth from 'mammoth';
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import pdf from 'pdf-parse';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 /**
  * Server Action to parse various file types and extract text content.
- * Uses the Legacy Build of pdfjs-dist for native Node.js compatibility on Render/Cloudflare.
+ * Uses pdf-parse for robust, worker-less PDF text extraction in Node.js environments.
  */
 export async function parseFileToText(formData: FormData) {
   try {
@@ -19,41 +19,23 @@ export async function parseFileToText(formData: FormData) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
     const fileType = file.name.split('.').pop()?.toLowerCase();
 
     let extractedText = "";
 
     if (fileType === 'pdf') {
       try {
-        // Using legacy build ensures it works natively in Node.js ESM environments
-        // without requiring an external HTTPS worker script.
-        const loadingTask = pdfjs.getDocument({
-          data: new Uint8Array(arrayBuffer),
-          isEvalSupported: false,
-          disableFontFace: true,
-          verbosity: 0
-        });
-        
-        const pdf = await loadingTask.promise;
-        let fullText = "";
-        
-        // Sequential page processing for memory efficiency
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items
-            .filter((item: any) => 'str' in item)
-            .map((item: any) => item.str)
-            .join(" ");
-          fullText += pageText + "\n";
-        }
-        extractedText = fullText;
+        // pdf-parse is purely server-side and doesn't require workers, 
+        // making it 100% compatible with Render and Cloudflare bundled environments.
+        const data = await pdf(buffer);
+        extractedText = data.text;
       } catch (pdfError: any) {
         console.error("PDF Parsing Error:", pdfError);
-        throw new Error(`PDF Engine Error: ${pdfError.message || "Native parsing failed."}`);
+        throw new Error(`PDF Engine Error: Native parsing failed. Ensure file is not password protected.`);
       }
     } else if (fileType === 'docx') {
-      const result = await mammoth.extractRawText({ buffer: Buffer.from(arrayBuffer) });
+      const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value;
     } else if (fileType === 'txt') {
       extractedText = new TextDecoder().decode(arrayBuffer);
