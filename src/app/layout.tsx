@@ -40,6 +40,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "DISCATE",
+    "url": "https://discate.com",
+    "logo": "https://discate.com/icons/512x512.png",
+    "description": "DISCATE is an elite academic mentorship platform providing AI-powered assessments and personalized learning journeys.",
+  };
+
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DISCATE",
+    "operatingSystem": "Web, Android, iOS",
+    "applicationCategory": "EducationalApplication",
+    "description": "DISCATE is an AI-powered education platform providing personalized assessments, essay evaluation, and elite mentorship.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -48,6 +71,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="apple-touch-icon" href="/icons/192x192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/icons/512x512.png" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+        />
       </head>
       <body className="font-body antialiased transition-colors duration-300">
         <FirebaseClientProvider>
