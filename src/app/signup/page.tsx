@@ -70,8 +70,8 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950">
       <Card className="w-full max-w-md border-none shadow-xl rounded-[40px] overflow-hidden bg-white dark:bg-slate-900">
-        <CardHeader className="text-center pt-8">
-          <DiscateLogo size="md" className="mx-auto mb-4" />
+        <CardHeader className="text-center pt-12">
+          <DiscateLogo size="md" className="mx-auto mb-2" />
           <CardTitle className="text-2xl font-headline font-bold">Create Account</CardTitle>
           <CardDescription>Join Discate for elite academic mentorship</CardDescription>
         </CardHeader>

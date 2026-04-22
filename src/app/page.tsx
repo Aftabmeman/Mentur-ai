@@ -78,9 +78,6 @@ export default function Home() {
         <div className="relative flex flex-col items-center animate-in zoom-in-95 duration-1000">
           <DiscateLogo size="xl" />
           <div className="mt-8 text-center space-y-2">
-            <h1 className="text-5xl font-black font-headline tracking-tighter bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent animate-gradient-x">
-              Discate
-            </h1>
             <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.4em] animate-pulse">
               {isReturningUser ? "Welcome Back" : "Human-AI Intelligence"}
             </p>

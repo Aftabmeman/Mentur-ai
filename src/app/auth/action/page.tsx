@@ -62,9 +62,9 @@ function AuthActionHandler() {
       <Card className="w-full max-w-md border-none shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl relative z-10">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
         
-        <CardHeader className="text-center pt-10 pb-4">
+        <CardHeader className="text-center pt-12 pb-4">
           <DiscateLogo size="md" className="mx-auto mb-6" />
-          <CardTitle className="text-3xl font-headline font-bold tracking-tight text-slate-900 dark:text-white">
+          <CardTitle className="text-3xl font-headline font-bold tracking-tight text-slate-900 dark:text-white uppercase">
             Discate
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium">

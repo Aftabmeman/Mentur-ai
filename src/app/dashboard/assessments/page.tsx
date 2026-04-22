@@ -87,7 +87,6 @@ export default function AssessmentsPage() {
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
-  const fileInputRef = useRef<HTMLInputElement>(null)
   
   const profileRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
@@ -143,7 +142,7 @@ export default function AssessmentsPage() {
         description: "Please upload a document smaller than 5MB.", 
         variant: "destructive" 
       });
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      event.target.value = '';
       return;
     }
 
@@ -163,7 +162,7 @@ export default function AssessmentsPage() {
       toast({ title: "Error", description: "Failed to parse document.", variant: "destructive" });
     } finally {
       setIsParsing(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      event.target.value = '';
     }
   };
 
@@ -323,13 +322,16 @@ export default function AssessmentsPage() {
                   </div>
                   
                   <div className="flex flex-col gap-4">
-                    <input type="file" accept=".txt,.pdf,.docx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-                    <Button 
-                      variant="outline"
-                      type="button"
-                      disabled={isParsing}
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full h-20 sm:h-28 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-all group disabled:opacity-50"
+                    <input 
+                      type="file" 
+                      id="mobile-file-picker"
+                      accept=".txt,.pdf,.docx" 
+                      className="hidden" 
+                      onChange={handleFileUpload} 
+                    />
+                    <label 
+                      htmlFor="mobile-file-picker"
+                      className="w-full h-20 sm:h-28 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-all group cursor-pointer disabled:opacity-50"
                     >
                       {isParsing ? (
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -341,7 +343,7 @@ export default function AssessmentsPage() {
                            <span className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">MAX 5MB</span>
                         </div>
                       )}
-                    </Button>
+                    </label>
 
                     <textarea 
                       className="w-full min-h-[180px] sm:min-h-[250px] rounded-[1.5rem] sm:rounded-[1.8rem] bg-slate-50 dark:bg-slate-950 border-none p-5 sm:p-6 text-sm sm:text-lg dark:text-white resize-none leading-relaxed transition-all outline-none shadow-inner placeholder:text-slate-200"
