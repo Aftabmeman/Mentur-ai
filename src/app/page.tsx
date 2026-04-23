@@ -3,25 +3,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronRight, 
   Sparkles, 
   ShieldCheck, 
-  Zap, 
   GraduationCap, 
   FileEdit, 
-  BrainCircuit,
-  ArrowRight
+  BrainCircuit
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiscateLogo } from "@/components/DiscateLogo";
 import Link from "next/link";
 
 export default function Home() {
-  const router = useRouter();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {

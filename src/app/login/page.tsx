@@ -23,44 +23,45 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     if (!auth) return;
     
-    setGoogleLoading(true);
+    // CRITICAL: provider and popup must be triggered synchronously in the event handler 
+    // to bypass strict browser popup blockers.
     const provider = new GoogleAuthProvider();
+    setGoogleLoading(true);
     
-    try {
-      // Direct call to reduce friction with browser popup blockers
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      
-      const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
-      const profileSnap = await getDoc(profileRef);
+    signInWithPopup(auth, provider)
+      .then(async (result) => {
+        const user = result.user;
+        const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
+        const profileSnap = await getDoc(profileRef);
 
-      if (profileSnap.exists()) {
-        toast({ title: "Welcome Back", description: `Signed in as ${user.displayName}` });
-        router.push("/dashboard");
-      } else {
-        toast({ title: "Profile Required", description: "Complete your elite profile to continue." });
-        router.push("/signup");
-      }
-    } catch (error: any) {
-      console.error("Google Auth Error:", error);
-      let errorMsg = error.message;
-      
-      if (error.code === 'auth/popup-blocked') {
-        errorMsg = "Browser blocked the popup. Please enable popups in your settings and try again.";
-      } else if (error.code === 'auth/unauthorized-domain') {
-        errorMsg = "This domain is not authorized. Please add discate.com to Firebase Authorized Domains.";
-      }
-      
-      toast({
-        title: "Google Sign-In Failed",
-        description: errorMsg,
-        variant: "destructive",
+        if (profileSnap.exists()) {
+          toast({ title: "Welcome Back", description: `Signed in as ${user.displayName}` });
+          router.push("/dashboard");
+        } else {
+          toast({ title: "Profile Required", description: "Complete your elite profile to continue." });
+          router.push("/signup");
+        }
+      })
+      .catch((error: any) => {
+        console.error("Google Auth Error:", error);
+        let errorMsg = error.message;
+        
+        if (error.code === 'auth/popup-blocked') {
+          errorMsg = "Browser blocked the popup. Please click again or enable popups in your browser settings.";
+        } else if (error.code === 'auth/unauthorized-domain') {
+          errorMsg = "Unauthorized Domain: Please ensure discate.com is added to Firebase Authorized Domains.";
+        }
+        
+        toast({
+          title: "Sign-In Failed",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        setGoogleLoading(false);
       });
-      setGoogleLoading(false); // Reset only on error
-    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
