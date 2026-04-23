@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator"
 
 /**
  * Enhanced Login Page for Discate AI.
- * Uses Popup as primary and Redirect as fallback for maximum stability.
+ * Redirects to onboarding to show slides after successful login.
  */
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -37,14 +37,14 @@ export default function LoginPage() {
   useEffect(() => {
     if (!auth || !firestore) return;
 
-    // Handle Redirect Result (Fallback)
+    // Handle Redirect Result
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         const user = result.user;
         const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
         const profileSnap = await getDoc(profileRef);
         if (profileSnap.exists()) {
-          router.push("/dashboard");
+          router.push("/onboarding");
         } else {
           router.push("/signup");
         }
@@ -57,7 +57,7 @@ export default function LoginPage() {
         const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
         const profileSnap = await getDoc(profileRef);
         if (profileSnap.exists()) {
-          router.push("/dashboard");
+          router.push("/onboarding");
         } else {
           setGoogleLoading(false);
         }
@@ -75,19 +75,17 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     
     try {
-      // Try Popup first (Better experience, no loop)
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
       const profileSnap = await getDoc(profileRef);
 
       if (profileSnap.exists()) {
-        router.push("/dashboard");
+        router.push("/onboarding");
       } else {
         router.push("/signup");
       }
     } catch (error: any) {
-      // If popup is blocked, fallback to Redirect
       if (error.code === 'auth/popup-blocked') {
         signInWithRedirect(auth, provider);
       } else {
@@ -103,6 +101,7 @@ export default function LoginPage() {
     try {
       if (!auth) throw new Error("Auth not initialized");
       await signInWithEmailAndPassword(auth, email, password)
+      router.push("/onboarding")
     } catch (error: any) {
       toast({
         title: "Login Failed",
@@ -117,7 +116,7 @@ export default function LoginPage() {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.4em] animate-pulse">Checking Profile...</p>
+        <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.4em] animate-pulse">Authenticating Scholar...</p>
       </div>
     );
   }

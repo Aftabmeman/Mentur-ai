@@ -3,7 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
+import { auth, firestore } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronRight, 
@@ -12,17 +14,84 @@ import {
   GraduationCap, 
   FileEdit, 
   BrainCircuit,
-  Mail
+  Mail,
+  Loader2,
+  ArrowRight,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiscateLogo } from "@/components/DiscateLogo";
 import Link from "next/link";
 
 /**
- * Public Landing Page for DISCATE AI.
- * This page is accessible to everyone (no login wall) to meet Google Verification standards.
+ * Smart Landing Page for DISCATE AI.
+ * Shows 'Welcome Back' to logged-in users and 'Landing Page' to guests.
  */
 export default function Home() {
+  const [userState, setUserState] = useState<'loading' | 'authenticated' | 'guest'>('loading');
+  const [userName, setUserName] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUserName(user.displayName?.split(' ')[0] || "Scholar");
+        setUserState('authenticated');
+      } else {
+        setUserState('guest');
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (userState === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <Loader2 className="h-10 w-10 animate-spin text-primary/30" />
+      </div>
+    );
+  }
+
+  // Welcome Back Screen for persistent sessions
+  if (userState === 'authenticated') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFD] dark:bg-slate-950 p-6">
+        <div className="max-w-md w-full text-center space-y-10 animate-in fade-in zoom-in-95 duration-700">
+          <div className="relative inline-block">
+             <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 opacity-50" />
+             <DiscateLogo size="lg" className="relative z-10" />
+          </div>
+          
+          <div className="space-y-3">
+            <h1 className="text-4xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase leading-none">
+              Welcome Back, <span className="text-primary">{userName}</span>
+            </h1>
+            <p className="text-slate-500 font-medium tracking-tight">Your elite academic dashboard is ready.</p>
+          </div>
+
+          <div className="space-y-4">
+            <Button 
+              className="w-full h-16 rounded-[1.5rem] bg-primary text-white font-black text-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all group"
+              onClick={() => router.push('/dashboard')}
+            >
+              Go to Dashboard
+              <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em]"
+              onClick={() => auth.signOut()}
+            >
+              <LogOut className="h-3 w-3 mr-2" /> Sign out of Discate
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original Landing Page for guest/first-time users
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFD] dark:bg-slate-950 font-body transition-colors duration-500">
       {/* Navigation */}
@@ -130,7 +199,7 @@ export default function Home() {
             </p>
             <div className="flex items-center gap-2 text-primary font-black text-sm pt-2">
               <Mail className="h-4 w-4" />
-              <Link href="mailto:aftabghaswalaofficial@gmail.com" className="hover:underline">aftabghaswalaofficial@gmail.com</Link>
+              <Link href="mailto:appdevelopmentlearning@gmail.com" className="hover:underline">appdevelopmentlearning@gmail.com</Link>
             </div>
           </div>
           

@@ -32,7 +32,7 @@ const languages = [
 
 /**
  * Enhanced Signup Page for Discate AI.
- * Reverted to Popup as primary for better session consistency.
+ * Redirects to onboarding to show slides after profile completion.
  */
 export default function SignupPage() {
   const [step, setStep] = useState(1)
@@ -49,14 +49,14 @@ export default function SignupPage() {
   useEffect(() => {
     if (!auth || !firestore) return;
 
-    // Handle Redirect Result (Fallback)
+    // Handle Redirect Result
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         const user = result.user;
         const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
         const profileSnap = await getDoc(profileRef);
         if (profileSnap.exists()) {
-          router.push("/dashboard");
+          router.push("/onboarding");
         } else {
           setName(user.displayName || "");
           setEmail(user.email || "");
@@ -71,7 +71,7 @@ export default function SignupPage() {
         const profileSnap = await getDoc(profileRef);
         
         if (profileSnap.exists()) {
-          router.push("/dashboard");
+          router.push("/onboarding");
         } else {
           setName(user.displayName || "");
           setEmail(user.email || "");
@@ -98,7 +98,7 @@ export default function SignupPage() {
       const profileSnap = await getDoc(profileRef);
 
       if (profileSnap.exists()) {
-        router.push("/dashboard");
+        router.push("/onboarding");
       } else {
         setName(user.displayName || "");
         setEmail(user.email || "");
@@ -146,7 +146,7 @@ export default function SignupPage() {
         })
         
         if (currentUser) {
-          router.push("/dashboard");
+          router.push("/onboarding");
         } else {
           router.push("/dashboard/verify-email");
         }
