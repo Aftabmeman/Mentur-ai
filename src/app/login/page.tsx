@@ -26,13 +26,13 @@ export default function LoginPage() {
   const handleGoogleSignIn = () => {
     if (!auth) return;
     
-    // CRITICAL: provider and popup must be triggered synchronously in the event handler 
-    // to bypass strict browser popup blockers.
+    // CRITICAL: We call signInWithPopup IMMEDIATELY before any state updates
+    // to ensure the browser recognizes this as a direct user gesture.
     const provider = new GoogleAuthProvider();
-    setGoogleLoading(true);
     
     signInWithPopup(auth, provider)
       .then(async (result) => {
+        setGoogleLoading(true); // Start loading only after popup success
         const user = result.user;
         const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
         const profileSnap = await getDoc(profileRef);
@@ -50,9 +50,9 @@ export default function LoginPage() {
         let errorMsg = error.message;
         
         if (error.code === 'auth/popup-blocked') {
-          errorMsg = "Browser blocked the popup. Please click again or enable popups in your browser settings.";
+          errorMsg = "Browser blocked the popup. Please try clicking again immediately.";
         } else if (error.code === 'auth/unauthorized-domain') {
-          errorMsg = "Unauthorized Domain: Please ensure discate.com is added to Firebase Authorized Domains.";
+          errorMsg = "Unauthorized Domain: Please add discate.com to Firebase Authorized Domains.";
         }
         
         toast({

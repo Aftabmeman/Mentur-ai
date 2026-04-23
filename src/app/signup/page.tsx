@@ -42,12 +42,13 @@ export default function SignupPage() {
   const handleGoogleSignIn = () => {
     if (!auth) return;
     
-    // CRITICAL: Provider and Popup call must be synchronous to bypass blockers.
+    // CRITICAL: We call signInWithPopup IMMEDIATELY before any state updates.
+    // React state updates before the popup can cause browsers to block the window.
     const provider = new GoogleAuthProvider();
-    setGoogleLoading(true);
     
     signInWithPopup(auth, provider)
       .then(async (result) => {
+        setGoogleLoading(true); // Only show loading after popup is triggered successfully
         const user = result.user;
         const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
         const profileSnap = await getDoc(profileRef);
@@ -67,7 +68,7 @@ export default function SignupPage() {
         let errorMsg = error.message;
         
         if (error.code === 'auth/popup-blocked') {
-          errorMsg = "Browser blocked the popup. Please click again or allow popups in settings.";
+          errorMsg = "Browser blocked the popup. Please try clicking again immediately.";
         } else if (error.code === 'auth/unauthorized-domain') {
           errorMsg = "Unauthorized Domain: Ensure discate.com is added to Authorized Domains.";
         }
