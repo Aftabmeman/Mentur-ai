@@ -7,8 +7,8 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider"
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'Discate | Elite Academic Mentorship',
-  description: 'Elevate your learning with Discate: AI-powered assessment generation and essay evaluation.',
+  title: 'DISCATE AI | Elite Academic Mentorship',
+  description: 'DISCATE AI is an intelligent academic mentor providing AI-powered assessments and personalized learning journeys.',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Discate',
+    title: 'DISCATE AI',
   },
 };
 
@@ -43,19 +43,24 @@ export default function RootLayout({
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "DISCATE",
+    "name": "DISCATE AI",
     "url": "https://discate.com",
     "logo": "https://discate.com/icons/512x512.png",
-    "description": "DISCATE is an elite academic mentorship platform providing AI-powered assessments and personalized learning journeys.",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": "aftabghaswalaofficial@gmail.com",
+      "contactType": "customer support"
+    },
+    "description": "DISCATE AI is an elite academic mentorship platform providing AI-powered assessments and personalized learning journeys.",
   };
 
   const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "DISCATE",
+    "name": "DISCATE AI",
     "operatingSystem": "Web, Android, iOS",
     "applicationCategory": "EducationalApplication",
-    "description": "DISCATE is an AI-powered education platform providing personalized assessments, essay evaluation, and elite mentorship.",
+    "description": "DISCATE AI is an AI-powered education platform providing personalized assessments, essay evaluation, and elite mentorship.",
     "offers": {
       "@type": "Offer",
       "price": "0",

@@ -11,7 +11,8 @@ import {
   ShieldCheck, 
   GraduationCap, 
   FileEdit, 
-  BrainCircuit
+  BrainCircuit,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiscateLogo } from "@/components/DiscateLogo";
@@ -71,22 +72,26 @@ export default function Home() {
             </div>
             
             <h1 className="text-5xl md:text-8xl font-black font-headline tracking-tighter text-slate-900 dark:text-white leading-[0.9] text-balance">
-              Welcome to <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">DISCATE AI</span>
+              DISCATE AI: <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Your Intelligent</span>
               <br />
-              <span className="text-4xl md:text-6xl">Your Academic Mentor</span>
+              <span className="text-4xl md:text-6xl">Academic Mentor</span>
             </h1>
             
             <p className="text-slate-500 dark:text-slate-400 text-lg md:text-2xl font-medium max-w-2xl mx-auto leading-relaxed">
               Transform your study routine with deep-metric evaluations, adaptive assessments, and AI-powered writing feedback.
             </p>
             
-            <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="pt-8 flex flex-col items-center justify-center gap-6">
               <Button className="h-16 md:h-20 px-10 md:px-14 rounded-2xl bg-primary text-white font-black text-xl md:text-2xl shadow-2xl shadow-primary/30 hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all group" asChild>
                 <Link href="/signup">
                   Get Started
                   <ChevronRight className="ml-2 h-6 w-6 group-hover:translate-x-2 transition-transform" />
                 </Link>
               </Button>
+              
+              <p className="text-[10px] md:text-xs text-slate-400 font-medium max-w-sm mx-auto leading-relaxed text-balance">
+                We use your Google account information only to securely manage your academic dashboard and sync your progress.
+              </p>
             </div>
           </div>
         </section>
@@ -151,21 +156,42 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-12 border-t bg-white dark:bg-slate-950 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex flex-col items-center md:items-start gap-2">
+      <footer className="py-16 border-t bg-white dark:bg-slate-950 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start justify-between gap-12">
+          <div className="flex flex-col items-start gap-4 max-w-sm">
             <DiscateLogo size="sm" />
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em]">Elite Academic Mentorship</p>
+            <p className="text-slate-400 text-sm font-medium leading-relaxed">
+              Elite Academic Mentorship powered by DISCATE AI. Transforming how knowledge is mastered through seamless AI symbiosis.
+            </p>
+            <div className="flex items-center gap-2 text-primary font-black text-sm pt-2">
+              <Mail className="h-4 w-4" />
+              <Link href="mailto:aftabghaswalaofficial@gmail.com">aftabghaswalaofficial@gmail.com</Link>
+            </div>
           </div>
           
-          <div className="flex items-center gap-8">
-            <Link href="/privacy" className="text-slate-500 hover:text-primary font-bold text-sm transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="text-slate-500 hover:text-primary font-bold text-sm transition-colors">Terms of Service</Link>
+          <div className="flex flex-wrap gap-12">
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-900 dark:text-white">Legal</h4>
+              <ul className="space-y-2">
+                <li><Link href="/privacy" className="text-slate-500 hover:text-primary font-bold text-sm transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="text-slate-500 hover:text-primary font-bold text-sm transition-colors">Terms of Service</Link></li>
+              </ul>
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-900 dark:text-white">Platform</h4>
+              <ul className="space-y-2">
+                <li><Link href="/login" className="text-slate-500 hover:text-primary font-bold text-sm transition-colors">Login</Link></li>
+                <li><Link href="/signup" className="text-slate-500 hover:text-primary font-bold text-sm transition-colors">Signup</Link></li>
+              </ul>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <span>© {new Date().getFullYear()} DISCATE AI. All rights reserved.</span>
+          <div className="flex flex-col items-end gap-2 text-slate-400 text-xs font-medium w-full md:w-auto pt-8 md:pt-0 border-t md:border-t-0 border-slate-100">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <span>© {new Date().getFullYear()} DISCATE AI. All rights reserved.</span>
+            </div>
           </div>
         </div>
       </footer>

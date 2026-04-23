@@ -20,7 +20,7 @@ export default function TermsPage() {
         {/* Header */}
         <div className="space-y-4 border-b border-slate-200 pb-8">
           <h1 className="text-4xl sm:text-5xl font-black font-headline tracking-tighter uppercase">Terms of Service</h1>
-          <p className="text-slate-500 font-medium">Last Updated: May 20, 2024</p>
+          <p className="text-slate-500 font-medium">Last Updated: April 23, 2026</p>
         </div>
 
         {/* Content */}
@@ -75,10 +75,10 @@ export default function TermsPage() {
               For support or legal inquiries regarding these terms, please contact:
             </p>
             <Link 
-              href="mailto:appdevelopmentlearning@gmail.com" 
+              href="mailto:aftabghaswalaofficial@gmail.com" 
               className="text-indigo-600 font-black hover:underline text-lg"
             >
-              appdevelopmentlearning@gmail.com
+              aftabghaswalaofficial@gmail.com
             </Link>
           </section>
         </div>

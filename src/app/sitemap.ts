@@ -7,7 +7,7 @@ import { MetadataRoute } from 'next'
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://discate.com'
-  const lastModified = new Date('2024-05-20')
+  const lastModified = new Date('2026-04-23')
 
   return [
     {
