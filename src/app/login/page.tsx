@@ -26,11 +26,12 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     const provider = new GoogleAuthProvider();
+    
     try {
+      // Direct call to reduce friction with browser popup blockers
       const result = await signInWithPopup(auth!, provider);
       const user = result.user;
       
-      // Check if profile exists, otherwise they need to signup
       const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
       const profileSnap = await getDoc(profileRef);
 
@@ -38,14 +39,20 @@ export default function LoginPage() {
         toast({ title: "Welcome Back", description: `Signed in as ${user.displayName}` });
         router.push("/dashboard");
       } else {
-        // New user through Google login button - redirect to signup step 2
         toast({ title: "Profile Required", description: "Complete your elite profile to continue." });
         router.push("/signup");
       }
     } catch (error: any) {
+      console.error("Google Auth Error:", error);
+      let errorMsg = error.message;
+      
+      if (error.code === 'auth/popup-blocked') {
+        errorMsg = "Browser blocked the popup. Please enable popups in your settings and try again.";
+      }
+      
       toast({
         title: "Google Sign-In Failed",
-        description: error.message,
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -108,7 +115,7 @@ export default function LoginPage() {
                     />
                     <path
                       fill="currentColor"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                       fill="#EA4335"
                     />
                   </svg>
