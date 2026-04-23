@@ -40,7 +40,7 @@ export default function SignupPage() {
   const [name, setName] = useState("")
   const [language, setLanguage] = useState("English")
   const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(true) // Start with checking auth
+  const [googleLoading, setGoogleLoading] = useState(true)
   
   const router = useRouter()
   const { toast } = useToast()
@@ -56,9 +56,10 @@ export default function SignupPage() {
           const profileSnap = await getDoc(profileRef);
           
           if (profileSnap.exists()) {
+            // Existing user, send to dashboard
             router.push("/dashboard");
           } else {
-            // Logged in but no profile -> Go to Step 2
+            // Logged in but no profile (Google naya user) -> Go to Step 2
             setName(user.displayName || "");
             setEmail(user.email || "");
             setStep(2);
@@ -82,7 +83,6 @@ export default function SignupPage() {
           const profileSnap = await getDoc(profileRef);
 
           if (profileSnap.exists()) {
-            toast({ title: "Welcome Back", description: `Signed in as ${user.displayName}` });
             router.push("/dashboard");
           } else {
             setName(user.displayName || "");
@@ -99,7 +99,7 @@ export default function SignupPage() {
       });
 
     return () => unsubscribe();
-  }, [router, toast]);
+  }, [router]);
 
   const handleGoogleSignIn = () => {
     if (!auth) return;
@@ -115,7 +115,7 @@ export default function SignupPage() {
       const currentUser = auth?.currentUser;
       let uid = currentUser?.uid;
 
-      // If user isn't logged in (Email/Pass flow)
+      // Email/Password flow
       if (!currentUser) {
         const userCredential = await createUserWithEmailAndPassword(auth!, email, password);
         await updateProfile(userCredential.user, { displayName: name });
@@ -167,7 +167,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 font-body">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 font-body transition-colors duration-500">
       <Card className="w-full max-w-md border-none shadow-[0_25px_70px_rgba(0,0,0,0.1)] rounded-[3rem] overflow-hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl relative">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
         
@@ -182,7 +182,7 @@ export default function SignupPage() {
             <div className="space-y-6">
               <Button 
                 variant="outline" 
-                className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 border-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 border-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm dark:text-white"
                 onClick={handleGoogleSignIn}
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">

@@ -23,14 +23,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(true) // Start with loading to check redirect result
+  const [googleLoading, setGoogleLoading] = useState(true)
   const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
     if (!auth || !firestore) return;
 
-    // Monitor auth state changes to catch users landing from redirect
+    // Monitor auth state changes - This is the primary redirect driver
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
@@ -38,8 +38,10 @@ export default function LoginPage() {
           const profileSnap = await getDoc(profileRef);
           
           if (profileSnap.exists()) {
+            // User exists, go to dashboard
             router.push("/dashboard");
           } else {
+            // New user signed in via Google, send to signup for profile completion
             router.push("/signup");
           }
         } catch (e) {
@@ -51,7 +53,7 @@ export default function LoginPage() {
       }
     });
 
-    // Handle Google Redirect Result
+    // Handle Google Redirect Result as a backup verification
     getRedirectResult(auth)
       .then(async (result) => {
         if (result) {
@@ -63,7 +65,6 @@ export default function LoginPage() {
             toast({ title: "Welcome Back", description: `Signed in as ${user.displayName}` });
             router.push("/dashboard");
           } else {
-            toast({ title: "Profile Required", description: "Complete your elite profile to continue." });
             router.push("/signup");
           }
         }
@@ -83,7 +84,7 @@ export default function LoginPage() {
     if (!auth) return;
     setGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    // Using redirect to bypass all popup blocker issues permanently
+    // Using redirect for maximum stability
     signInWithRedirect(auth, provider);
   };
 
@@ -92,7 +93,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await signInWithEmailAndPassword(auth!, email, password)
-      // Redirection is handled by AuthProvider or the onAuthStateChanged listener above
+      // Redirection is handled by onAuthStateChanged listener
     } catch (error: any) {
       toast({
         title: "Login Failed",
@@ -113,7 +114,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 font-body">
+    <div className="min-h-screen w-full flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 font-body transition-colors duration-500">
       <Card className="w-full max-w-md border-none shadow-[0_25px_70px_rgba(0,0,0,0.1)] rounded-[3rem] overflow-hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl relative">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
         
@@ -127,7 +128,7 @@ export default function LoginPage() {
           <div className="space-y-6">
             <Button 
               variant="outline" 
-              className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 border-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+              className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 border-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm dark:text-white"
               onClick={handleGoogleSignIn}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
