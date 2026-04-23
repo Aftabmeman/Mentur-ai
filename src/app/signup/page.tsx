@@ -1,12 +1,13 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { 
   createUserWithEmailAndPassword, 
   sendEmailVerification, 
   updateProfile, 
-  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult,
   GoogleAuthProvider 
 } from "firebase/auth"
 import { auth, firestore } from "@/lib/firebase"
@@ -39,47 +40,42 @@ export default function SignupPage() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const handleGoogleSignIn = () => {
-    if (!auth) return;
-    
-    // CRITICAL: We call signInWithPopup IMMEDIATELY before any state updates.
-    // React state updates before the popup can cause browsers to block the window.
-    const provider = new GoogleAuthProvider();
-    
-    signInWithPopup(auth, provider)
-      .then(async (result) => {
-        setGoogleLoading(true); // Only show loading after popup is triggered successfully
-        const user = result.user;
-        const profileRef = doc(firestore!, "users", user.uid, "profile", "stats");
-        const profileSnap = await getDoc(profileRef);
+  useEffect(() => {
+    if (!auth || !firestore) return;
 
-        if (profileSnap.exists()) {
-          toast({ title: "Welcome Back", description: `Signed in as ${user.displayName}` });
-          router.push("/dashboard");
-        } else {
-          setName(user.displayName || "");
-          setEmail(user.email || "");
-          setStep(2);
-          setGoogleLoading(false);
+    // Handle the result of the Google Redirect
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result) {
+          setGoogleLoading(true);
+          const user = result.user;
+          const profileRef = doc(firestore, "users", user.uid, "profile", "stats");
+          const profileSnap = await getDoc(profileRef);
+
+          if (profileSnap.exists()) {
+            toast({ title: "Welcome Back", description: `Signed in as ${user.displayName}` });
+            router.push("/dashboard");
+          } else {
+            // New Google user: pre-fill data and move to step 2 for language selection
+            setName(user.displayName || "");
+            setEmail(user.email || "");
+            setStep(2);
+            setGoogleLoading(false);
+          }
         }
       })
       .catch((error: any) => {
-        console.error("Google Auth Error:", error);
-        let errorMsg = error.message;
-        
-        if (error.code === 'auth/popup-blocked') {
-          errorMsg = "Browser blocked the popup. Please try clicking again immediately.";
-        } else if (error.code === 'auth/unauthorized-domain') {
-          errorMsg = "Unauthorized Domain: Ensure discate.com is added to Authorized Domains.";
-        }
-        
-        toast({
-          title: "Sign-In Failed",
-          description: errorMsg,
-          variant: "destructive",
-        });
+        console.error("Redirect Result Error:", error);
         setGoogleLoading(false);
       });
+  }, [router, toast]);
+
+  const handleGoogleSignIn = () => {
+    if (!auth) return;
+    setGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
+    // Using redirect instead of popup to avoid all browser popup blocking issues
+    signInWithRedirect(auth, provider);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -99,8 +95,8 @@ export default function SignupPage() {
       if (uid) {
         await setDoc(doc(firestore!, "users", uid, "profile", "stats"), {
           id: uid,
-          email,
-          fullName: name,
+          email: email || currentUser?.email,
+          fullName: name || currentUser?.displayName,
           preferredLanguage: language,
           totalCoins: 0,
           assessmentsDone: 0,
