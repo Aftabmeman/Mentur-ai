@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth"
+import { signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInWithEmailAndPassword } from "firebase/auth"
 import { auth, firestore } from "@/lib/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
@@ -26,6 +26,18 @@ export default function LoginPage() {
   useEffect(() => {
     if (!auth || !firestore) return;
 
+    // First check if user is already logged in and has a profile
+    const checkExistingSession = async () => {
+      if (auth.currentUser) {
+        const profileRef = doc(firestore, "users", auth.currentUser.uid, "profile", "stats");
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+          router.push("/dashboard");
+        }
+      }
+    };
+    checkExistingSession();
+
     // Handle the result of the Google Redirect
     getRedirectResult(auth)
       .then(async (result) => {
@@ -40,13 +52,14 @@ export default function LoginPage() {
             router.push("/dashboard");
           } else {
             toast({ title: "Profile Required", description: "Complete your elite profile to continue." });
-            // Redirect to signup to complete profile if it doesn't exist
             router.push("/signup");
           }
         }
       })
       .catch((error: any) => {
-        console.error("Redirect Result Error:", error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+          console.error("Redirect Result Error:", error);
+        }
         setGoogleLoading(false);
       });
   }, [router, toast]);
@@ -55,7 +68,6 @@ export default function LoginPage() {
     if (!auth) return;
     setGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    // Use redirect instead of popup to bypass blockers
     signInWithRedirect(auth, provider);
   };
 

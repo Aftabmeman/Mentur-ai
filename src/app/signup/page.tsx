@@ -43,6 +43,23 @@ export default function SignupPage() {
   useEffect(() => {
     if (!auth || !firestore) return;
 
+    // Check if user is already logged in and just needs profile redirect
+    const checkExistingSession = async () => {
+      if (auth.currentUser) {
+        const profileRef = doc(firestore, "users", auth.currentUser.uid, "profile", "stats");
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+          router.push("/dashboard");
+        } else if (step === 1) {
+          // If logged in but no profile, move to language step
+          setName(auth.currentUser.displayName || "");
+          setEmail(auth.currentUser.email || "");
+          setStep(2);
+        }
+      }
+    };
+    checkExistingSession();
+
     // Handle the result of the Google Redirect
     getRedirectResult(auth)
       .then(async (result) => {
@@ -65,16 +82,17 @@ export default function SignupPage() {
         }
       })
       .catch((error: any) => {
-        console.error("Redirect Result Error:", error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+          console.error("Redirect Result Error:", error);
+        }
         setGoogleLoading(false);
       });
-  }, [router, toast]);
+  }, [router, toast, step]);
 
   const handleGoogleSignIn = () => {
     if (!auth) return;
     setGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    // Using redirect instead of popup to avoid all browser popup blocking issues
     signInWithRedirect(auth, provider);
   };
 
