@@ -3,7 +3,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { applyActionCode } from 'firebase/auth';
+import { applyActionCode, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,17 +14,16 @@ import {
   ArrowRight, 
   Mail, 
   ShieldCheck, 
-  LifeBuoy
+  LifeBuoy,
+  Wand2
 } from 'lucide-react';
 import { DiscateLogo } from '@/components/DiscateLogo';
+import { useToast } from '@/hooks/use-toast';
 
-/**
- * Handles Firebase Authentication actions (email verification, password reset, etc.)
- * This page must be set as the 'Action URL' in Firebase Console Templates.
- */
 function AuthActionHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -33,29 +32,49 @@ function AuthActionHandler() {
   const oobCode = searchParams.get('oobCode');
 
   useEffect(() => {
-    // If we're verifying an email
-    if (mode === 'verifyEmail' && oobCode) {
-      handleVerifyEmail(oobCode);
-    } else if (mode === 'resetPassword') {
-      // Redirect to a dedicated reset page or handle here
-      router.push(`/reset-password?oobCode=${oobCode}`);
-    } else {
-      setStatus('error');
-      setErrorMessage('The action link is invalid, broken, or has expired.');
-    }
-  }, [mode, oobCode, router]);
+    const handleAuthAction = async () => {
+      if (!auth) return;
 
-  const handleVerifyEmail = async (code: string) => {
-    try {
-      if (!auth) throw new Error("Firebase Auth not initialized");
-      await applyActionCode(auth, code);
-      setStatus('success');
-    } catch (error: any) {
-      console.error('Verification error:', error);
-      setStatus('error');
-      setErrorMessage(error.message || "We couldn't verify your email. The link might be expired.");
-    }
-  };
+      // 1. Handle Magic Link (Passwordless)
+      if (isSignInWithEmailLink(auth, window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        
+        if (!email) {
+          // If the link was opened on a different device/browser
+          email = window.prompt('Please provide your email for verification');
+        }
+
+        try {
+          await signInWithEmailLink(auth, email || '', window.location.href);
+          window.localStorage.removeItem('emailForSignIn');
+          setStatus('success');
+          toast({ title: "Magic Authenticated", description: "Welcome to the elite scholarship." });
+        } catch (error: any) {
+          setStatus('error');
+          setErrorMessage(error.message || "Failed to sign in with this link.");
+        }
+        return;
+      }
+
+      // 2. Handle standard verification modes
+      if (mode === 'verifyEmail' && oobCode) {
+        try {
+          await applyActionCode(auth, oobCode);
+          setStatus('success');
+        } catch (error: any) {
+          setStatus('error');
+          setErrorMessage(error.message || "Email verification failed.");
+        }
+      } else if (mode === 'resetPassword') {
+        router.push(`/reset-password?oobCode=${oobCode}`);
+      } else {
+        setStatus('error');
+        setErrorMessage('The action link is invalid or expired.');
+      }
+    };
+
+    handleAuthAction();
+  }, [mode, oobCode, router, toast]);
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 font-body">
@@ -65,7 +84,7 @@ function AuthActionHandler() {
         <CardHeader className="text-center pt-12 pb-4">
           <DiscateLogo size="md" className="mx-auto mb-6" />
           <CardDescription className="text-slate-500 font-medium uppercase tracking-[0.2em] text-[10px]">
-            Academic verification portal
+            Academic authentication portal
           </CardDescription>
         </CardHeader>
 
@@ -74,8 +93,8 @@ function AuthActionHandler() {
             <div className="flex flex-col items-center py-12 space-y-6">
               <Loader2 className="h-16 w-16 text-primary animate-spin" />
               <div className="text-center space-y-2">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Processing...</h3>
-                <p className="text-sm text-slate-500">Connecting to elite academic servers.</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Authenticating...</h3>
+                <p className="text-sm text-slate-500">Synchronizing with academic node.</p>
               </div>
             </div>
           )}
@@ -87,24 +106,24 @@ function AuthActionHandler() {
               </div>
               
               <div className="text-center space-y-3">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Identity Verified</h3>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Access Granted</h3>
                 <p className="text-slate-500 text-sm leading-relaxed max-w-[280px] mx-auto">
-                  Your academic profile is now activated. Welcome to the elite mentorship.
+                  Your identity has been verified. Welcome to elite mentorship.
                 </p>
               </div>
 
               <div className="w-full space-y-4">
                 <Button 
                   className="w-full h-14 rounded-2xl font-bold text-lg bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 group"
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push('/onboarding')}
                 >
-                  Go to Dashboard
+                  Enter Dashboard
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 
                 <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-600 uppercase tracking-widest">
                   <ShieldCheck className="h-4 w-4" />
-                  Secure Access Granted
+                  Secure Token Validated
                 </div>
               </div>
             </div>
@@ -117,7 +136,7 @@ function AuthActionHandler() {
               </div>
 
               <div className="text-center space-y-3">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Invalid Link</h3>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Link Invalid</h3>
                 <p className="text-slate-500 text-sm px-4">
                   {errorMessage}
                 </p>
@@ -127,10 +146,10 @@ function AuthActionHandler() {
                 <Button 
                   variant="outline"
                   className="w-full h-12 rounded-xl font-bold border-2"
-                  onClick={() => router.push('/signup')}
+                  onClick={() => router.push('/login')}
                 >
-                  <Mail className="mr-2 h-5 w-5" />
-                  Try Signup Again
+                  <Wand2 className="mr-2 h-5 w-5" />
+                  Try New Link
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -138,7 +157,7 @@ function AuthActionHandler() {
                   onClick={() => router.push('/login')}
                 >
                   <LifeBuoy className="mr-2 h-5 w-5" />
-                  Return to Login
+                  Back to Gateway
                 </Button>
               </div>
             </div>
