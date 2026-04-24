@@ -2,6 +2,7 @@
 'use server';
 /**
  * @fileOverview High-performance academic assessment generator using Groq llama-3.1-8b-instant.
+ * Optimized for mixed-mode with strict count enforcement.
  */
 
 import { z } from 'zod';
@@ -68,15 +69,22 @@ export async function generateStudyAssessments(input: GenerateStudyAssessmentsIn
   if (material.length > 8000) material = material.substring(0, 8000) + "...";
 
   const isMixed = input.assessmentTypes.includes('Mixed');
-  const countInstruction = isMixed 
-    ? `Generate EXACTLY: ${input.mcqCount || 0} MCQs, ${input.flashcardCount || 0} Flashcards, and ${input.essayCount || 0} Essay Prompts.`
-    : `Generate EXACTLY ${input.questionCount} items of type ${input.assessmentTypes[0]}.`;
+  
+  // Strict count enforcement logic
+  const targetMcq = isMixed ? (input.mcqCount || 0) : (input.assessmentTypes.includes('MCQ') ? input.questionCount : 0);
+  const targetFlash = isMixed ? (input.flashcardCount || 0) : (input.assessmentTypes.includes('Flashcard') ? input.questionCount : 0);
+  const targetEssay = isMixed ? (input.essayCount || 0) : (input.assessmentTypes.includes('Essay') ? input.questionCount : 0);
 
-  const systemPrompt = `You are a Senior Academic Content Developer for Discate.
-Generate content ONLY from the provided material using llama-3.1-8b-instant.
+  const countInstruction = `CRITICAL: You MUST generate EXACTLY ${targetMcq} MCQs, EXACTLY ${targetFlash} Flashcards, and EXACTLY ${targetEssay} Essay Prompts. Do not skip any items.`;
+
+  const systemPrompt = `You are a Senior Academic Content Developer for Discate AI.
+Generate high-quality academic content ONLY from the provided material.
 LEVEL: ${input.academicLevel} | DIFFICULTY: ${input.difficulty}
 ${countInstruction}
-Return ONLY valid JSON.`;
+Ensure each MCQ has 4 unique options and one clearly correct answer.
+Each Flashcard must facilitate active recall.
+Each Essay Prompt must be thought-provoking and relevant.
+Return ONLY valid JSON following the schema provided.`;
 
   const userPrompt = `Material:
 """
@@ -113,9 +121,12 @@ JSON Schema:
     const data = await response.json();
     const content = extractJson(data.choices[0].message.content);
     
-    return GenerateStudyAssessmentsOutputSchema.parse(content);
+    // Final check for empty arrays vs expected counts
+    const output = GenerateStudyAssessmentsOutputSchema.parse(content);
+    
+    return output;
   } catch (error: any) {
     console.error("AI Generation Error:", error.message);
-    return { error: "Failed to generate assessment. Try again." };
+    return { error: "Failed to generate assessment. The material might be too complex for a large set. Try reducing item counts." };
   }
 }

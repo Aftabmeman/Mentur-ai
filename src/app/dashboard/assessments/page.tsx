@@ -21,7 +21,8 @@ import {
   Globe,
   Target,
   Brain,
-  Lightbulb
+  Lightbulb,
+  FileText
 } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { generateStudyAssessments, type GenerateStudyAssessmentsOutput } from "@/ai/flows/generate-study-assessments-flow"
@@ -70,16 +71,6 @@ const honestyTranslations: Record<string, { title: string, desc: string, btn: st
     title: "Sachai hi Jeet hai",
     desc: "Flashcards active recall ke liye bane hain. Agar card flip karne ke baad lage ki aapko answer sahi se nahi pata tha, toh 'I Learned It' choose karein. Khud se jhoot na bole. Shuru karein?",
     btn: "Sachai se Shuru Karein"
-  },
-  "Hindi": {
-    title: "ईमानदारी ही श्रेष्ठता है",
-    desc: "फ्लैशकार्ड सक्रिय स्मरण के लिए डिज़ाइन किए गए हैं। यदि आप कार्ड पलटते हैं और महसूस करते हैं कि आप वास्तव में उत्तर नहीं जानते थे, तो अपने प्रति ईमानदार रहें—'मैंने यह सीखा' पर क्लिक करें। क्या आप तैयार हैं?",
-    btn: "ईमानदारी से शुरू करें"
-  },
-  "Marathish": {
-    title: "प्रामाणिकपणा म्हणजे प्रभुत्व",
-    desc: "फ्लॅशकार्ड्स सक्रिय आठवण्यासाठी डिझाइन केलेले आहेत. जर तुम्ही कार्ड फ्लिप केले आणि तुम्हाला उत्तर माहित नव्हते असे वाटले, तर स्वतःशी प्रामाणिक राहा—'मी हे शिकलो' वर क्लिक करा. तुम्ही तयार आहात का?",
-    btn: "प्रामाणिकपणे सुरुवात करा"
   }
 };
 
@@ -123,6 +114,7 @@ export default function AssessmentsPage() {
   const [essayContent, setEssayContent] = useState("")
   const [isAnalyzingEssay, setIsAnalyzingEssay] = useState(false)
   const [essayResult, setEssayResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
+  const [showMasterclass, setShowMasterclass] = useState(false)
 
   useEffect(() => {
     if (profile?.preferredLanguage) {
@@ -156,7 +148,7 @@ export default function AssessmentsPage() {
         toast({ title: "Parsing Failed", description: response.error, variant: "destructive" });
       } else if (response.text) {
         setMaterial(response.text);
-        toast({ title: "Elite Material Loaded", description: "Your resource has been ingested successfully by Discate." });
+        toast({ title: "Elite Material Loaded", description: "Your resource has been ingested successfully by Discate AI." });
       }
     } catch (e) {
       toast({ title: "Error", description: "Failed to parse document.", variant: "destructive" });
@@ -204,6 +196,7 @@ export default function AssessmentsPage() {
     }
 
     setIsAnalyzingEssay(true)
+    setShowMasterclass(false)
     try {
       const evaluation = await evaluateEssayFeedback({
         topic: "Practice Session",
@@ -223,7 +216,7 @@ export default function AssessmentsPage() {
         confetti({ particleCount: 150, spread: 70 });
       }
     } catch (e) {
-      toast({ title: "Error", description: "Discate Professor is busy. Try again.", variant: "destructive" })
+      toast({ title: "Error", description: "AI Professor is busy. Try again.", variant: "destructive" })
     } finally {
       setIsAnalyzingEssay(false)
     }
@@ -246,6 +239,7 @@ export default function AssessmentsPage() {
     setCurrentIdx(0)
     setIsAnswerRevealed(false)
     setEssayResult(null)
+    setShowMasterclass(false)
     setEssayContent("")
     setMcqCorrectCount(0)
     setShowLangConfirm(false)
@@ -258,6 +252,7 @@ export default function AssessmentsPage() {
       setCurrentIdx(prev => prev + 1)
       setIsAnswerRevealed(false)
       setEssayResult(null)
+      setShowMasterclass(false)
       setEssayContent("")
     } else {
       handleModeCompletion()
@@ -277,7 +272,7 @@ export default function AssessmentsPage() {
     if (db && user?.uid && coinsEarned > 0) {
       incrementUserStats(db, user.uid, coinsEarned, true);
     }
-    toast({ title: `${currentMode} Complete!`, description: `Earned ${coinsEarned} Coins via Discate.` });
+    toast({ title: `${currentMode} Complete!`, description: `Earned ${coinsEarned} Coins via Discate AI.` });
     confetti({ particleCount: 150, spread: 70 });
   }
 
@@ -421,14 +416,14 @@ export default function AssessmentsPage() {
                           <span className="text-[10px] font-black uppercase text-slate-400">MCQs</span>
                           <Badge variant="secondary" className="rounded-lg">{mcqCount}</Badge>
                         </div>
-                        <Slider value={[mcqCount]} onValueChange={(v) => setMcqCount(v[0])} min={10} max={20} step={1} />
+                        <Slider value={[mcqCount]} onValueChange={(v) => setMcqCount(v[0])} min={10} max={25} step={1} />
                       </div>
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <span className="text-[10px] font-black uppercase text-slate-400">Flashcards</span>
                           <Badge variant="secondary" className="rounded-lg">{flashcardCount}</Badge>
                         </div>
-                        <Slider value={[flashcardCount]} onValueChange={(v) => setFlashcardCount(v[0])} min={10} max={20} step={1} />
+                        <Slider value={[flashcardCount]} onValueChange={(v) => setFlashcardCount(v[0])} min={10} max={25} step={1} />
                       </div>
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
@@ -448,7 +443,7 @@ export default function AssessmentsPage() {
                         value={[questionCount]} 
                         onValueChange={(v) => setQuestionCount(v[0])} 
                         min={questionType === "Essay" ? 1 : 10} 
-                        max={questionType === "Essay" ? 5 : 30} 
+                        max={questionType === "Essay" ? 10 : 50} 
                         step={1} 
                         className="py-4" 
                       />
@@ -473,7 +468,7 @@ export default function AssessmentsPage() {
           </div>
           <div className="space-y-2">
             <h2 className="text-xl sm:text-3xl font-black font-headline tracking-tighter leading-tight">Evaluation Mix</h2>
-            <p className="text-slate-500 text-xs sm:text-base font-medium leading-relaxed max-w-xs mx-auto text-balance">Choose your preferred style for the Discate Mentor's feedback.</p>
+            <p className="text-slate-500 text-xs sm:text-base font-medium leading-relaxed max-w-xs mx-auto text-balance">Choose your preferred style for the AI Mentor's feedback.</p>
           </div>
           <div className="space-y-4 max-w-xs mx-auto">
             <Select value={preferredLanguage} onValueChange={setPreferredLanguage}>
@@ -526,7 +521,7 @@ export default function AssessmentsPage() {
               {isAnswerRevealed && (
                 <div className="pt-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="p-4 sm:p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-[1.2rem] border border-emerald-100 dark:border-emerald-800/50 text-[11px] sm:text-base text-emerald-800 dark:text-emerald-300 font-medium leading-relaxed shadow-inner italic text-balance text-center">
-                    <p className="font-black mb-1 uppercase tracking-[0.4em] text-[7px] text-emerald-600 not-italic">Discate's Perspective</p>
+                    <p className="font-black mb-1 uppercase tracking-[0.4em] text-[7px] text-emerald-600 not-italic">Scholar's Perspective</p>
                     {result.mcqs[currentIdx].explanation}
                   </div>
                   <Button onClick={() => nextItem()} className="w-full h-12 sm:h-14 rounded-[1rem] sm:rounded-[1.2rem] bg-primary text-white font-black text-sm sm:text-base shadow-xl active:scale-95 transition-all">
@@ -647,12 +642,32 @@ export default function AssessmentsPage() {
                     ))}
                   </div>
 
-                  <div className="p-5 sm:p-6 bg-primary/5 rounded-[1.2rem] sm:rounded-[1.5rem] italic text-sm sm:text-lg text-slate-700 dark:text-slate-100 leading-relaxed border-l-4 border-primary shadow-inner text-balance text-center">
+                  <div className="p-5 sm:p-6 bg-primary/5 rounded-[1.2rem] sm:rounded-[1.5rem] italic text-sm sm:text-lg text-slate-700 dark:text-slate-100 leading-relaxed border-l-4 border-primary shadow-inner text-balance text-center relative">
                     " {essayResult.professorFeedback} "
                   </div>
 
-                  <Button onClick={() => nextItem()} className="w-full h-12 sm:h-14 rounded-[1rem] sm:rounded-[1.2rem] bg-primary text-white font-black text-sm sm:text-base shadow-xl active:scale-95 transition-all">
-                    Next Challenge <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  <div className="space-y-4">
+                    <Button 
+                      onClick={() => setShowMasterclass(!showMasterclass)} 
+                      variant="outline" 
+                      className="w-full h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-[0.3em] flex items-center justify-center gap-3"
+                    >
+                      <FileText className="h-4 w-4" />
+                      {showMasterclass ? "Hide Masterclass Answer" : "See How to Improve Your Answer"}
+                    </Button>
+
+                    {showMasterclass && (
+                      <div className="animate-in slide-in-from-top-4 duration-500 space-y-4">
+                         <Badge className="bg-slate-900 text-white uppercase font-black text-[7px] tracking-[0.4em] px-8 py-2 rounded-full shadow-2xl">The Masterclass Answer</Badge>
+                         <div className="p-6 sm:p-8 bg-slate-900 dark:bg-black rounded-[1.8rem] text-slate-300 leading-relaxed text-sm sm:text-lg italic whitespace-pre-wrap border border-white/5 shadow-xl text-left">
+                            {essayResult.suggestedRewrite}
+                         </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button onClick={() => nextItem()} className="w-full h-14 sm:h-16 rounded-[1rem] sm:rounded-[1.2rem] bg-primary text-white font-black text-base sm:text-lg shadow-xl active:scale-95 transition-all">
+                    Next Challenge <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               )}
