@@ -11,7 +11,8 @@ import {
   BarChart3, 
   Settings,
   LogOut,
-  Sparkles
+  Sparkles,
+  Youtube
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { 
@@ -31,6 +32,7 @@ const mainNavItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
   { icon: GraduationCap, label: "Assessments", href: "/dashboard/assessments" },
   { icon: FileEdit, label: "Writing Lab", href: "/dashboard/essay-lab" },
+  { icon: Youtube, label: "YouTube Lab", href: "/dashboard/youtube-lab" },
 ]
 
 const statsNavItems = [

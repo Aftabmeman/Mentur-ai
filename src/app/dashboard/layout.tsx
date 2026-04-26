@@ -3,7 +3,7 @@
 
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useTheme } from "@/components/providers/ThemeProvider"
-import { Moon, Sun, User, Home, GraduationCap, FileEdit } from "lucide-react"
+import { Moon, Sun, User, Home, GraduationCap, FileEdit, Youtube } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -17,6 +17,7 @@ const navItems = [
   { icon: Home, label: "Home", href: "/dashboard" },
   { icon: GraduationCap, label: "Practice", href: "/dashboard/assessments" },
   { icon: FileEdit, label: "Writing", href: "/dashboard/essay-lab" },
+  { icon: Youtube, label: "YouTube", href: "/dashboard/youtube-lab" },
   { icon: User, label: "Account", href: "/dashboard/profile" },
 ];
 
