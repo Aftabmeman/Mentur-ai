@@ -12,11 +12,11 @@ import ytdl from '@distube/ytdl-core';
 
 export async function processYoutubeToNotes(videoUrl: string, academicLevel: string = "Class 10th") {
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error("AI credentials missing.");
+  if (!apiKey) return { error: "AI credentials (GROQ_API_KEY) missing in environment." };
 
   try {
     const videoId = extractVideoId(videoUrl);
-    if (!videoId) throw new Error("Invalid YouTube link format.");
+    if (!videoId) throw new Error("Invalid YouTube link format. Please provide a standard URL.");
 
     let transcriptText = "";
     let methodUsed = "native";
@@ -32,8 +32,8 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
       transcriptText = await transcribeWithWhisper(videoUrl, apiKey);
     }
 
-    if (!transcriptText || transcriptText.length < 50) {
-      throw new Error("Could not extract enough content from this video.");
+    if (!transcriptText || transcriptText.trim().length < 50) {
+      throw new Error("Could not extract enough content from this video. It might be too short or restricted.");
     }
 
     // Step 3: Send to Llama 3.1 8b for Notes & Questions
@@ -49,6 +49,9 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
     
     Maintain an encouraging and brilliant tone. Use logical arguments. Keep structure clean.`;
 
+    // Limit transcript to ~12000 chars to avoid context window / rate limit issues
+    const safeTranscript = transcriptText.substring(0, 12000);
+
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -59,29 +62,38 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
         model: 'llama-3.1-8b-instant',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Transcript:\n"""\n${transcriptText.substring(0, 15000)}\n"""` }
+          { role: 'user', content: `Transcript:\n"""\n${safeTranscript}\n"""` }
         ],
         temperature: 0.3,
+        max_tokens: 2048,
       }),
     });
 
-    if (!response.ok) throw new Error("Llama API failed.");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMsg = errorData.error?.message || response.statusText || "Unknown API Error";
+      throw new Error(`Groq Llama Error: ${errorMsg}`);
+    }
 
     const data = await response.json();
     
+    if (!data.choices || !data.choices[0]) {
+      throw new Error("Invalid response structure from AI model.");
+    }
+
     return {
       content: data.choices[0].message.content,
       tokenUsage: {
-        input: data.usage.prompt_tokens,
-        output: data.usage.completion_tokens,
-        total: data.usage.total_tokens
+        input: data.usage?.prompt_tokens || 0,
+        output: data.usage?.completion_tokens || 0,
+        total: data.usage?.total_tokens || 0
       },
       method: methodUsed
     };
 
   } catch (error: any) {
     console.error("YouTube Processor Error:", error.message);
-    return { error: error.message || "Failed to process video." };
+    return { error: error.message || "Failed to process video. Please try a different link." };
   }
 }
 
@@ -92,38 +104,37 @@ function extractVideoId(url: string) {
 }
 
 async function transcribeWithWhisper(videoUrl: string, apiKey: string): Promise<string> {
-  // We use ytdl-core to get a small audio stream
-  // Note: Downloading full audio in server actions has memory/time limits.
-  // We attempt to get the lowest bitrate audio to stay within limits.
-  const info = await ytdl.getInfo(videoUrl);
-  const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'lowestaudio' });
-  
-  if (!audioFormat.url) throw new Error("Could not find audio stream.");
+  try {
+    const info = await ytdl.getInfo(videoUrl);
+    const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'lowestaudio' });
+    
+    if (!audioFormat.url) throw new Error("Could not find audio stream.");
 
-  // Fetch the audio stream as a buffer
-  const audioResponse = await fetch(audioFormat.url);
-  const audioBlob = await audioResponse.blob();
-  
-  // Construct Form Data for Groq Whisper
-  const formData = new FormData();
-  formData.append('file', audioBlob, 'audio.mp3');
-  formData.append('model', 'whisper-large-v3');
-  formData.append('response_format', 'json');
+    const audioResponse = await fetch(audioFormat.url);
+    if (!audioResponse.ok) throw new Error("Failed to fetch audio stream.");
+    const audioBlob = await audioResponse.blob();
+    
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.mp3');
+    formData.append('model', 'whisper-large-v3');
+    formData.append('response_format', 'json');
 
-  const whisperResponse = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: formData,
-  });
+    const whisperResponse = await fetch('https://api.groq.com/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: formData,
+    });
 
-  if (!whisperResponse.ok) {
-    const errData = await whisperResponse.text();
-    console.error("Whisper Error:", errData);
-    throw new Error("Audio transcription failed.");
+    if (!whisperResponse.ok) {
+      const errData = await whisperResponse.json().catch(() => ({}));
+      throw new Error(`Whisper Transcription Failed: ${errData.error?.message || whisperResponse.statusText}`);
+    }
+
+    const result = await whisperResponse.json();
+    return result.text;
+  } catch (err: any) {
+    throw new Error(`Audio Analysis Failed: ${err.message}`);
   }
-
-  const result = await whisperResponse.json();
-  return result.text;
 }

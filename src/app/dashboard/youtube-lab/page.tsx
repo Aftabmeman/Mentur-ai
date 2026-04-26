@@ -15,18 +15,21 @@ import {
   Zap,
   Info,
   ExternalLink,
-  Target
+  Target,
+  AlertCircle
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { processYoutubeToNotes } from "@/app/actions/youtube-processor"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function YoutubeLabPage() {
   const [url, setUrl] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
   const handleGenerate = async () => {
@@ -37,18 +40,21 @@ export default function YoutubeLabPage() {
 
     setIsLoading(true);
     setResult(null);
+    setError(null);
 
     try {
       const data = await processYoutubeToNotes(url);
       if (data.error) {
-        toast({ title: "Generation Failed", description: data.error, variant: "destructive" });
+        setError(data.error);
+        toast({ title: "Generation Failed", description: "Check the error console below.", variant: "destructive" });
       } else {
         setResult(data);
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         toast({ title: "Intelligence Forged", description: `Notes generated using ${data.method} extraction.` });
       }
-    } catch (e) {
-      toast({ title: "System Error", description: "Something went wrong with the neural link.", variant: "destructive" });
+    } catch (e: any) {
+      setError(e.message || "Something went wrong with the neural link.");
+      toast({ title: "System Error", description: "Connectivity issue detected.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -60,6 +66,16 @@ export default function YoutubeLabPage() {
         <h1 className="text-3xl sm:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase leading-tight">YouTube Lab</h1>
         <p className="text-[9px] font-black text-slate-400 mt-2 tracking-[0.4em] uppercase">Video to Academic Intelligence</p>
       </div>
+
+      {error && (
+        <Alert variant="destructive" className="rounded-3xl border-none shadow-2xl bg-red-50 dark:bg-red-950/30 text-red-600 animate-in slide-in-from-top-4">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle className="font-black uppercase text-[10px] tracking-widest">Generation Failed</AlertTitle>
+          <AlertDescription className="text-sm font-medium">
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="border-none shadow-3xl rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden relative border border-slate-100 dark:border-white/5">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 via-primary to-red-500" />
