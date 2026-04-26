@@ -5,9 +5,9 @@ import { YoutubeTranscript } from 'youtube-transcript';
 import ytdl from '@distube/ytdl-core';
 
 /**
- * YouTube Link to Notes Processor
- * Handles transcript extraction (native or Whisper fallback) 
- * and generation of notes using Llama 3.1 8b.
+ * YouTube Link to Notes Processor (Refactored for High TPM & Robust Fallback)
+ * Model: meta-llama/llama-4-scout-17b-16e-instruct (30k TPM)
+ * Fallback: whisper-large-v3-turbo
  */
 
 export async function processYoutubeToNotes(videoUrl: string, academicLevel: string = "Class 10th") {
@@ -21,36 +21,43 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
     let transcriptText = "";
     let methodUsed = "native";
 
-    // Step 1: Attempt to fetch existing transcript (Fast & Free)
+    // --- ATTEMPT 1: Native Subtitles (Fast & Free) ---
     try {
       const transcript = await YoutubeTranscript.fetchTranscript(videoId);
       transcriptText = transcript.map(t => t.text).join(' ');
     } catch (e) {
-      console.log("No native subtitles found, falling back to Whisper...");
-      // Step 2: Fallback - Extract Audio and Transcribe with Groq Whisper
-      methodUsed = "whisper";
-      transcriptText = await transcribeWithWhisper(videoUrl, apiKey);
+      console.log("No native subtitles found, falling back to Whisper AI...");
+      
+      // --- ATTEMPT 2: AI Audio Fallback (Whisper) ---
+      try {
+        methodUsed = "whisper";
+        transcriptText = await transcribeWithWhisper(videoUrl, apiKey);
+      } catch (whisperError: any) {
+        console.error("Whisper Error:", whisperError.message);
+        return { error: "Error: Video audio exceeds limits or Whisper failed." };
+      }
     }
 
     if (!transcriptText || transcriptText.trim().length < 50) {
-      throw new Error("Could not extract enough content from this video. It might be too short or restricted.");
+      throw new Error("Could not extract enough content from this video.");
     }
 
-    // Step 3: Send to Llama 3.1 8b for Notes & Questions
-    const systemPrompt = `You are an elite academic mentor. Transform the following transcript into Detailed Study Notes and 5 Important Questions.
+    // --- FINAL STEP: Generate Notes with Llama 4 Scout (30k TPM) ---
+    const systemPrompt = `You are an Expert Academic Evaluator. Transform the following transcript into high-quality Detailed Study Notes and 5 Deep Analytical Questions.
     LEVEL: ${academicLevel}
+    
     FORMAT: 
     # STUDY NOTES
-    [Detailed structured notes with headings and bullet points]
+    [Provide structured, detailed notes with clear headings and logical bullet points]
     
-    # 5 IMPORTANT QUESTIONS
-    1. [Question]
+    # 5 DEEP ANALYTICAL QUESTIONS
+    1. [Provide a high-level question that tests deep understanding]
     ...etc.
     
-    Maintain an encouraging and brilliant tone. Use logical arguments. Keep structure clean.`;
+    TONE: Brilliant, encouraging, and highly professional. Ensure technical accuracy.`;
 
-    // Limit transcript to ~12000 chars to avoid context window / rate limit issues
-    const safeTranscript = transcriptText.substring(0, 12000);
+    // Safe truncation to stay within reasonable context window
+    const safeTranscript = transcriptText.substring(0, 15000);
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -59,20 +66,18 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Transcript:\n"""\n${safeTranscript}\n"""` }
         ],
         temperature: 0.3,
-        max_tokens: 2048,
+        max_tokens: 3000,
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMsg = errorData.error?.message || response.statusText || "Unknown API Error";
-      throw new Error(`Groq Llama Error: ${errorMsg}`);
+      return { error: "Error: Groq Llama generation failed." };
     }
 
     const data = await response.json();
@@ -93,7 +98,7 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
 
   } catch (error: any) {
     console.error("YouTube Processor Error:", error.message);
-    return { error: error.message || "Failed to process video. Please try a different link." };
+    return { error: error.message || "Failed to process video." };
   }
 }
 
@@ -106,17 +111,28 @@ function extractVideoId(url: string) {
 async function transcribeWithWhisper(videoUrl: string, apiKey: string): Promise<string> {
   try {
     const info = await ytdl.getInfo(videoUrl);
-    const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'lowestaudio' });
+    
+    // CRITICAL: Choose absolute lowest bitrate to stay under 25MB for Groq Whisper
+    const audioFormat = ytdl.chooseFormat(info.formats, { 
+      quality: 'lowestaudio',
+      filter: 'audioonly'
+    });
     
     if (!audioFormat.url) throw new Error("Could not find audio stream.");
 
+    // Check if estimated file size might exceed 25MB (approx 25,000,000 bytes)
+    // Most 'lowestaudio' streams are ~48kbps, which is ~21MB for an hour.
     const audioResponse = await fetch(audioFormat.url);
     if (!audioResponse.ok) throw new Error("Failed to fetch audio stream.");
+    
     const audioBlob = await audioResponse.blob();
+    if (audioBlob.size > 25 * 1024 * 1024) {
+      throw new Error("Audio file too large for AI transcription (Max 25MB).");
+    }
     
     const formData = new FormData();
     formData.append('file', audioBlob, 'audio.mp3');
-    formData.append('model', 'whisper-large-v3');
+    formData.append('model', 'whisper-large-v3-turbo');
     formData.append('response_format', 'json');
 
     const whisperResponse = await fetch('https://api.groq.com/audio/transcriptions', {
@@ -129,7 +145,7 @@ async function transcribeWithWhisper(videoUrl: string, apiKey: string): Promise<
 
     if (!whisperResponse.ok) {
       const errData = await whisperResponse.json().catch(() => ({}));
-      throw new Error(`Whisper Transcription Failed: ${errData.error?.message || whisperResponse.statusText}`);
+      throw new Error(errData.error?.message || whisperResponse.statusText);
     }
 
     const result = await whisperResponse.json();
