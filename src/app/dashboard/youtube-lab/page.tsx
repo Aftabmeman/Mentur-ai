@@ -12,18 +12,13 @@ import {
   Sparkles, 
   FileText, 
   ArrowRight,
-  Zap,
-  Info,
   ExternalLink,
-  Target,
   AlertCircle,
-  Cpu,
   BrainCircuit
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { processYoutubeToNotes } from "@/app/actions/youtube-processor"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
@@ -53,7 +48,7 @@ export default function YoutubeLabPage() {
       } else {
         setResult(data);
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-        toast({ title: "Intelligence Forged", description: `Session complete via ${data.method}.` });
+        toast({ title: "Intelligence Forged", description: `Session complete.` });
       }
     } catch (e: any) {
       setError(e.message || "Connectivity issue detected.");
@@ -63,7 +58,6 @@ export default function YoutubeLabPage() {
   };
 
   const handleLaunchMastery = () => {
-    // Store in session storage for the assessments page to pick up
     if (result?.content) {
       window.sessionStorage.setItem('youtube_notes_transfer', result.content);
       router.push('/dashboard/assessments');
@@ -133,26 +127,6 @@ export default function YoutubeLabPage() {
 
       {result && (
         <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-700">
-          {/* Developer Insights Section */}
-          <Card className="border-none bg-slate-900 text-white rounded-[2rem] overflow-hidden">
-            <div className="p-6 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <Cpu className="h-4 w-4" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Developer Insights</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Extraction Path</p>
-                  <p className="text-sm font-bold">{result.method}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Neural Engines</p>
-                  <p className="text-sm font-bold">{result.aiUsed}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
           <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 overflow-hidden">
             <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b dark:border-white/5 p-8 flex flex-row items-center justify-between">
                <div className="flex items-center gap-3">
@@ -180,27 +154,6 @@ export default function YoutubeLabPage() {
                   <Button onClick={handleLaunchMastery} className="w-full h-16 rounded-2xl bg-primary text-white font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">
                     Launch Mastery Wizard <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                </div>
-              </div>
-
-              <div className="pt-8 border-t border-slate-100 dark:border-white/5 space-y-4">
-                <div className="flex items-center gap-2 text-primary">
-                   <Target className="h-4 w-4" />
-                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">Groq Neural Usage (Scout & Whisper)</h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                   <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-white/5">
-                      <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-1">Input Tokens</p>
-                      <p className="text-lg font-black text-slate-900 dark:text-white">{result.tokenUsage.input}</p>
-                   </div>
-                   <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-white/5">
-                      <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-1">Output Tokens</p>
-                      <p className="text-lg font-black text-slate-900 dark:text-white">{result.tokenUsage.output}</p>
-                   </div>
-                   <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20">
-                      <p className="text-[7px] font-black text-primary uppercase tracking-widest mb-1">Total Tokens</p>
-                      <p className="text-lg font-black text-primary">{result.tokenUsage.total}</p>
-                   </div>
                 </div>
               </div>
             </CardContent>
