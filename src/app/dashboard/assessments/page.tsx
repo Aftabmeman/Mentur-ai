@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -548,18 +549,18 @@ export default function AssessmentsPage() {
             <div className="flex flex-col items-center space-y-8 w-full max-w-md mx-auto">
               <div className="perspective-1000 w-full min-h-[350px] sm:min-h-[400px] cursor-pointer" onClick={() => setIsAnswerRevealed(!isAnswerRevealed)}>
                 <div className={cn("relative w-full h-full min-h-[350px] sm:min-h-[400px] transition-all duration-700 preserve-3d shadow-3xl rounded-[2.5rem]", isAnswerRevealed ? "rotate-y-180" : "")}>
-                  <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 sm:p-10 flex flex-col items-center justify-center text-center border border-slate-100 dark:border-white/5 overflow-y-auto no-scrollbar">
-                    <Badge className="bg-primary/10 text-primary mb-6 font-black uppercase text-[10px] tracking-[0.4em] px-6 py-2.5 rounded-full shrink-0 shadow-sm border border-primary/10">Recall Prompt</Badge>
-                    <div className="flex-1 flex flex-col items-center justify-center w-full space-y-4">
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Prompt:</span>
-                       <h3 className="text-xl sm:text-3xl font-black font-headline text-slate-900 dark:text-white leading-tight text-wrap break-words">{result.flashcards[currentIdx]?.front}</h3>
+                  <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center text-center border border-slate-100 dark:border-white/5 overflow-y-auto no-scrollbar">
+                    <Badge className="bg-primary/5 text-primary/40 mb-6 font-black uppercase text-[10px] tracking-[0.4em] px-6 py-2 rounded-full shrink-0 border border-primary/10 shadow-none">Discate AI</Badge>
+                    <div className="flex-1 flex flex-col items-center justify-center w-full space-y-4 px-2">
+                       <span className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">Scholar Prompt:</span>
+                       <h3 className="text-lg sm:text-xl font-black font-headline text-slate-900 dark:text-white leading-snug text-wrap break-words">{result.flashcards[currentIdx]?.front}</h3>
                     </div>
                   </div>
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 bg-slate-950 rounded-[2.5rem] p-6 sm:p-10 flex flex-col items-center justify-center text-center border border-white/5 overflow-y-auto no-scrollbar">
-                    <Badge className="bg-emerald-500/10 text-emerald-400 mb-6 font-black uppercase text-[10px] tracking-[0.4em] px-6 py-2.5 rounded-full shrink-0 shadow-sm border border-emerald-500/20">Mastery Point</Badge>
-                    <div className="flex-1 flex flex-col items-center justify-center w-full space-y-4">
-                       <span className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.4em]">The Answer:</span>
-                       <p className="text-lg sm:text-2xl font-black text-slate-100 leading-relaxed italic text-wrap break-words">"{result.flashcards[currentIdx]?.back}"</p>
+                  <div className="absolute inset-0 backface-hidden rotate-y-180 bg-slate-950 rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center text-center border border-white/5 overflow-y-auto no-scrollbar">
+                    <Badge className="bg-emerald-500/5 text-emerald-500/40 mb-6 font-black uppercase text-[10px] tracking-[0.4em] px-6 py-2 rounded-full shrink-0 border border-emerald-500/10 shadow-none">Discate AI</Badge>
+                    <div className="flex-1 flex flex-col items-center justify-center w-full space-y-4 px-2">
+                       <span className="text-[8px] font-black text-emerald-500/40 uppercase tracking-[0.4em]">Mastery Point:</span>
+                       <p className="text-base sm:text-lg font-black text-slate-100 leading-relaxed italic text-wrap break-words">"{result.flashcards[currentIdx]?.back}"</p>
                     </div>
                   </div>
                 </div>
