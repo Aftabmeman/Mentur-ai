@@ -1,4 +1,3 @@
-
 'use server';
 
 import { YoutubeTranscript } from 'youtube-transcript';
@@ -6,7 +5,7 @@ import ytdl from '@distube/ytdl-core';
 
 /**
  * YouTube Link to Notes Processor (Optimized Logic)
- * Priority: 1. Native Subtitles -> 2. AI Audio Fallback (Whisper)
+ * Priority: 1. Native Subtitles (Multi-lang fallback) -> 2. AI Audio Fallback (Whisper)
  * Model: meta-llama/llama-4-scout-17b-16e-instruct (30k TPM)
  */
 
@@ -23,27 +22,29 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
 
     // --- ATTEMPT 1: Native Subtitles (Fast & Free) ---
     try {
-      console.log(`Discate Engine: Attempting native subtitle fetch for ${videoId}...`);
-      const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+      console.log(`Discate Engine: Attempting subtitle fetch for ${videoId}...`);
+      // Trying to fetch without specific language first to get whatever is available
+      const transcript = await YoutubeTranscript.fetchTranscript(videoId).catch(async () => {
+        // Fallback for some videos where default might fail
+        return await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' });
+      });
       
       if (transcript && transcript.length > 0) {
         transcriptText = transcript.map(t => t.text).join(' ');
         methodUsed = "Native Subtitles";
-        console.log("Discate Engine: Native subtitles successfully extracted.");
       } else {
-        throw new Error("Empty transcript returned");
+        throw new Error("Empty transcript");
       }
     } catch (e) {
-      console.log("Discate Engine: Native subtitles failed or not found. Switching to AI Audio Fallback...");
+      console.log("Discate Engine: Subtitles failed. Switching to AI Audio Fallback...");
       
       // --- ATTEMPT 2: AI Audio Fallback (Whisper) ---
       try {
         methodUsed = "AI Audio Fallback (Whisper)";
         transcriptText = await transcribeWithWhisper(videoUrl, apiKey);
-        console.log("Discate Engine: Whisper transcription complete.");
       } catch (whisperError: any) {
         console.error("Whisper Error:", whisperError.message);
-        return { error: `Transcription Failed: ${whisperError.message || "Video audio exceeds limits or Whisper service busy."}` };
+        return { error: `Transcription Failed: Video audio exceeds 25MB limits or Whisper service busy.` };
       }
     }
 
@@ -83,8 +84,7 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return { error: `Error: Groq Llama generation failed. ${errorData.error?.message || 'Server Busy.'}` };
+      return { error: "Error: Groq Llama generation failed." };
     }
 
     const data = await response.json();
@@ -97,7 +97,7 @@ export async function processYoutubeToNotes(videoUrl: string, academicLevel: str
 
   } catch (error: any) {
     console.error("YouTube Processor Error:", error.message);
-    return { error: error.message || "An unexpected error occurred during processing." };
+    return { error: error.message || "An unexpected error occurred." };
   }
 }
 
@@ -116,14 +116,13 @@ async function transcribeWithWhisper(videoUrl: string, apiKey: string): Promise<
     filter: 'audioonly'
   });
   
-  if (!audioFormat.url) throw new Error("Could not find a valid audio stream for this video.");
+  if (!audioFormat.url) throw new Error("No valid audio stream found.");
 
   const audioResponse = await fetch(audioFormat.url);
   const audioBlob = await audioResponse.blob();
   
-  // 25MB Safety Check
   if (audioBlob.size > 25 * 1024 * 1024) {
-    throw new Error("The audio file is too large for AI processing (Max 25MB). Try a shorter video or one with native subtitles.");
+    throw new Error("Audio file too large (>25MB).");
   }
   
   const formData = new FormData();
@@ -136,10 +135,7 @@ async function transcribeWithWhisper(videoUrl: string, apiKey: string): Promise<
     body: formData,
   });
 
-  if (!whisperResponse.ok) {
-    const err = await whisperResponse.json().catch(() => ({}));
-    throw new Error(`Whisper API Error: ${err.error?.message || 'Transcription failed'}`);
-  }
+  if (!whisperResponse.ok) throw new Error("Whisper API failed.");
 
   const result = await whisperResponse.json();
   return result.text;
