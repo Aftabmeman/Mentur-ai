@@ -20,9 +20,21 @@
           "type": "string",
           "description": "The full name of the user."
         },
-        "totalCoins": {
+        "coinBalance": {
           "type": "number",
-          "description": "Total coins earned by the user."
+          "description": "Current available coins in the wallet."
+        },
+        "dailyCoinsUsed": {
+          "type": "number",
+          "description": "Coins spent today (capped at 5)."
+        },
+        "lastDailyReset": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastMonthlyAllowance": {
+          "type": "string",
+          "format": "date-time"
         },
         "assessmentsDone": {
           "type": "number",

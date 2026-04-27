@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
-import { incrementUserStats } from "@/firebase/non-blocking-updates"
+import { validateAndDeductCoins } from "@/firebase/non-blocking-updates"
 import { Progress } from "@/components/ui/progress"
 import { doc } from "firebase/firestore"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -116,7 +116,6 @@ export default function AssessmentsPage() {
   const [essayResult, setEssayResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
   const [showMasterclass, setShowMasterclass] = useState(false)
 
-  // Effect to pick up content from YouTube Lab
   useEffect(() => {
     const transferredContent = window.sessionStorage.getItem('youtube_notes_transfer');
     if (transferredContent) {
@@ -168,6 +167,14 @@ export default function AssessmentsPage() {
       toast({ title: "Content Short", description: "Please add at least 30 characters.", variant: "destructive" });
       return;
     }
+
+    // Wallet System: Text/PDF Assessment cost is 1 Coin
+    const walletCheck = await validateAndDeductCoins(db!, user!.uid, 1);
+    if (!walletCheck.success) {
+      toast({ title: "Access Denied", description: walletCheck.error, variant: "destructive" });
+      return;
+    }
+
     setIsLoading(true)
     try {
       const assessments = await generateStudyAssessments({
@@ -215,9 +222,6 @@ export default function AssessmentsPage() {
         toast({ title: "Analysis Failed", description: evaluation.error, variant: "destructive" })
       } else {
         setEssayResult(evaluation)
-        if (db && user?.uid && evaluation.evaluationData.coinsEarned > 0) {
-          incrementUserStats(db, user.uid, evaluation.evaluationData.coinsEarned, true);
-        }
         confetti({ particleCount: 150, spread: 70 });
       }
     } catch (e) {
@@ -269,15 +273,7 @@ export default function AssessmentsPage() {
     const currentMode = activeMode;
     setCompletedModes(prev => [...new Set([...prev, currentMode])])
     setActiveMode(null)
-
-    let coinsEarned = 0;
-    if (currentMode === 'MCQ') coinsEarned = mcqCorrectCount * 5;
-    if (currentMode === 'Flashcard') coinsEarned = (result?.flashcards?.length || 0) * 2;
-
-    if (db && user?.uid && coinsEarned > 0) {
-      incrementUserStats(db, user.uid, coinsEarned, true);
-    }
-    toast({ title: `${currentMode} Complete!`, description: `Earned ${coinsEarned} Coins via Discate AI.` });
+    toast({ title: `${currentMode} Complete!`, description: `Session mastered via Discate AI.` });
     confetti({ particleCount: 150, spread: 70 });
   }
 
@@ -340,7 +336,7 @@ export default function AssessmentsPage() {
                            <FileUp className="h-5 w-5 sm:h-8 sm:w-8 text-primary group-hover:scale-110 transition-transform" />
                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-primary">Upload Document</span>
                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">PDF, DOCX, TXT</span>
-                           <span className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">MAX 5MB</span>
+                           <span className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">Cost: 1 Coin</span>
                         </div>
                       )}
                     </label>
@@ -458,7 +454,7 @@ export default function AssessmentsPage() {
                 <div className="flex flex-col gap-2 pt-4">
                   <Button onClick={handleGenerate} disabled={isLoading} className="w-full h-14 sm:h-18 rounded-[1.2rem] sm:rounded-[1.5rem] bg-primary hover:bg-primary/90 text-white font-black text-base sm:text-lg shadow-xl group">
                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Sparkles className="h-5 w-5 mr-2 group-hover:scale-125 transition-transform" />}
-                    {isLoading ? "Forging Session..." : "Begin Session"}
+                    {isLoading ? "Forging Session..." : "Begin Session (1 Coin)"}
                   </Button>
                   <Button variant="ghost" onClick={() => setStep(3)} className="h-10 rounded-xl font-black text-[8px] uppercase tracking-[0.4em] text-slate-300">Back to Format</Button>
                 </div>
@@ -640,7 +636,7 @@ export default function AssessmentsPage() {
                               <stat.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
                               <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">{stat.label}</span>
                            </div>
-                           <span className="text-sm sm:text-2xl font-black text-slate-900 dark:text-white">{stat.val}%</span>
+                           <span className="text-sm text-slate-900 dark:text-white">{stat.val}%</span>
                         </div>
                         <Progress value={stat.val} className="h-1.5 rounded-full bg-slate-100 dark:bg-slate-800" />
                       </div>
@@ -697,7 +693,6 @@ export default function AssessmentsPage() {
               { id: 'Essay', icon: ClipboardList, label: 'Writing Lab', list: result?.essayPrompts, color: 'text-emerald-500' }
             ].map((m) => {
               const isSelected = questionType === "Mixed" || questionType === m.id;
-              // Crucial: check if array exists and has elements
               if (!isSelected || !m.list || m.list.length === 0) return null;
               
               return (

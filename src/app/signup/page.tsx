@@ -30,10 +30,6 @@ const languages = [
   "Punjabish", "Tamilish", "Telugush", "Kannadish", "Malayalish"
 ];
 
-/**
- * Enhanced Signup Page for Discate AI.
- * Redirects to onboarding to show slides after profile completion.
- */
 export default function SignupPage() {
   const [step, setStep] = useState(1)
   const [email, setEmail] = useState("")
@@ -49,7 +45,6 @@ export default function SignupPage() {
   useEffect(() => {
     if (!auth || !firestore) return;
 
-    // Handle Redirect Result
     getRedirectResult(auth).then(async (result) => {
       if (result) {
         const user = result.user;
@@ -129,12 +124,16 @@ export default function SignupPage() {
       }
       
       if (uid) {
+        // Initialize Welcome Kit: 50 Coins
         await setDoc(doc(firestore!, "users", uid, "profile", "stats"), {
           id: uid,
           email: email || currentUser?.email,
           fullName: name || currentUser?.displayName,
           preferredLanguage: language,
-          totalCoins: 0,
+          coinBalance: 50,
+          dailyCoinsUsed: 0,
+          lastDailyReset: new Date().toISOString(),
+          lastMonthlyAllowance: new Date().toISOString(),
           assessmentsDone: 0,
           level: "Lvl 1",
           createdAt: new Date().toISOString()
