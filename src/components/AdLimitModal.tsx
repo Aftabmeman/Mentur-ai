@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -22,8 +22,8 @@ interface AdLimitModalProps {
 }
 
 /**
- * Bulletproof Ad Monetization Modal for Discate.
- * Logic: Opens ad in new tab, stays in app, forces 10s verification, guarantees reward.
+ * Bulletproof Ad Verification Modal for Mobile & Web.
+ * Uses Timestamp-based verification to handle background pausing in mobile browsers.
  */
 export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLimitModalProps) {
   const { user } = useUser();
@@ -31,59 +31,98 @@ export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLi
   const { toast } = useToast();
   
   const [view, setView] = useState<'prompt' | 'verifying' | 'success'>('prompt');
-  const [timer, setTimer] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(10);
   const [isGranting, setIsGranting] = useState(false);
+  
+  // Use refs to track state across backgrounding/pausing
+  const startTimeRef = useRef<number | null>(null);
+  const targetTime = 10000; // 10 seconds
 
   // Reset modal state when closed/reopened
   useEffect(() => {
     if (!isOpen) {
       setView('prompt');
-      setTimer(10);
+      setTimeLeft(10);
       setIsGranting(false);
+      startTimeRef.current = null;
     }
   }, [isOpen]);
 
-  // Mandatory 10-second countdown logic
+  // Mandatory Countdown Logic (Timestamp based for background resilience)
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (view === 'verifying' && timer > 0) {
+
+    if (view === 'verifying') {
       interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (view === 'verifying' && timer === 0 && !isGranting) {
-      handleClaimReward();
+        if (!startTimeRef.current) return;
+
+        const elapsed = Date.now() - startTimeRef.current;
+        const remaining = Math.max(0, Math.ceil((targetTime - elapsed) / 1000));
+        
+        setTimeLeft(remaining);
+
+        if (elapsed >= targetTime && !isGranting) {
+          clearInterval(interval);
+          handleClaimReward();
+        }
+      }, 500); // Check frequently to catch transitions
     }
+
     return () => clearInterval(interval);
-  }, [view, timer, isGranting]);
+  }, [view, isGranting]);
+
+  // Handle visibility change (User coming back from Ad tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && view === 'verifying' && startTimeRef.current) {
+        // Force immediate check when user returns
+        const elapsed = Date.now() - startTimeRef.current;
+        if (elapsed >= targetTime && !isGranting) {
+          handleClaimReward();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [view, isGranting]);
 
   const handleStartAd = () => {
-    // 1. Open Adsterra Direct Link in a NEW tab
+    // 1. Record exact start time
+    startTimeRef.current = Date.now();
+    
+    // 2. Open Adsterra Direct Link in a NEW tab
+    // We use a small delay or direct window.open
     window.open('https://www.profitablecpmratenetwork.com/j9ay58s17?key=b750504caa4b020b0a5da18b474f98bb', '_blank');
     
-    // 2. Immediately switch the current app state to Verification
+    // 3. Immediately switch UI to Verification
     setView('verifying');
-    setTimer(10);
+    setTimeLeft(10);
   };
 
   const handleClaimReward = async () => {
-    if (!db || !user?.uid) return;
+    if (!db || !user?.uid || isGranting) return;
     setIsGranting(true);
     
-    // Secure Firestore Update: +1 Coin & -1 DailyLimit (Bypasses cap)
-    const result = await grantAdReward(db, user.uid);
-    if (result.success) {
-      setView('success');
-      toast({
-        title: "🎉 Reward Authenticated!",
-        description: "+1 Academic Credit added to your wallet.",
-      });
-    } else {
+    try {
+      // Secure Firestore Update
+      const result = await grantAdReward(db, user.uid);
+      if (result.success) {
+        setView('success');
+        toast({
+          title: "🎉 Access Restored!",
+          description: "Reward authenticated via secure node.",
+        });
+      } else {
+        throw new Error("Sync failed");
+      }
+    } catch (e) {
       toast({
         variant: "destructive",
-        title: "Synchronization Error",
-        description: "Network jitter detected. Reverting to prompt.",
+        title: "Sync Delay",
+        description: "Retrying verification...",
       });
-      setView('prompt');
+      // Fallback: stay in verifying or revert if error persists
       setIsGranting(false);
     }
   };
@@ -103,7 +142,7 @@ export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLi
         className="sm:max-w-md rounded-[2.5rem] border-none shadow-3xl overflow-hidden p-0 bg-white dark:bg-slate-900"
       >
         
-        {/* PROMPT VIEW: Initial "Limit Reached" Message */}
+        {/* PROMPT VIEW */}
         {view === 'prompt' && (
           <div className="p-8 sm:p-12 text-center space-y-8 animate-in fade-in duration-500">
             <div className="h-20 w-20 bg-amber-100 dark:bg-amber-900/20 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm border border-amber-200/50">
@@ -114,7 +153,7 @@ export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLi
                 {reason === 'LIMIT_REACHED' ? "Daily Limit Reached 🛑" : "Insufficient Coins 🪙"}
               </DialogTitle>
               <DialogDescription className="text-slate-500 dark:text-slate-400 text-sm sm:text-base font-medium leading-relaxed px-2">
-                You've hit the elite usage threshold for today. Support our servers by visiting an ad partner to earn <strong className="text-primary">+1 Bonus Coin</strong> and continue your session.
+                You've hit the usage threshold. Visit an ad partner to earn <strong className="text-primary">+1 Bonus Coin</strong> and continue your elite session.
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-3 pt-4">
@@ -132,7 +171,7 @@ export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLi
           </div>
         )}
 
-        {/* VERIFYING VIEW: Unskippable 10s Countdown */}
+        {/* VERIFYING VIEW: Timestamp-Resilient Countdown */}
         {view === 'verifying' && (
           <div className="relative min-h-[450px] flex flex-col items-center justify-center bg-slate-950 p-8 sm:p-12 text-center overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 animate-pulse" />
@@ -140,7 +179,7 @@ export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLi
             <div className="relative z-10 space-y-10 w-full">
               <div className="space-y-2">
                 <div className="flex items-center justify-center gap-3 text-primary font-black text-[10px] uppercase tracking-[0.5em] animate-pulse">
-                   <Loader2 className="h-4 w-4 animate-spin" /> Verifying Academic Interaction
+                   <Loader2 className="h-4 w-4 animate-spin" /> Verifying Academic Action
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black text-white font-headline uppercase tracking-tighter">Syncing Reward Node</h3>
               </div>
@@ -154,13 +193,13 @@ export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLi
                       stroke="currentColor" 
                       strokeWidth="6" 
                       strokeDasharray="282.7" 
-                      strokeDashoffset={282.7 - (282.7 * (10 - timer)) / 10} 
+                      strokeDashoffset={282.7 - (282.7 * (10 - timeLeft)) / 10} 
                       strokeLinecap="round" 
-                      className="text-primary transition-all duration-1000 ease-linear shadow-[0_0_15px_rgba(147,51,234,0.5)]" 
+                      className="text-primary transition-all duration-300 ease-linear shadow-[0_0_15px_rgba(147,51,234,0.5)]" 
                     />
                  </svg>
                  <div className="flex flex-col items-center">
-                    <span className="text-6xl font-black text-white tabular-nums drop-shadow-2xl">{timer}</span>
+                    <span className="text-6xl font-black text-white tabular-nums drop-shadow-2xl">{timeLeft}</span>
                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Seconds</span>
                  </div>
               </div>
@@ -168,14 +207,14 @@ export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLi
               <div className="p-5 bg-white/5 rounded-2xl border border-white/10 flex items-start gap-4 text-left backdrop-blur-md">
                  <ExternalLink className="h-5 w-5 text-primary shrink-0 mt-1" />
                  <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                   Please keep the ad tab open in the background. Your academic credit will be granted automatically in <span className="text-white font-bold">{timer}s</span>.
+                   Verification is active. Please return to this tab after closing the ad to claim your coin.
                  </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* SUCCESS VIEW: Reward Confirmation */}
+        {/* SUCCESS VIEW */}
         {view === 'success' && (
           <div className="p-8 sm:p-14 text-center space-y-10 animate-in fade-in zoom-in-95 duration-700">
             <div className="relative inline-block">
@@ -186,7 +225,7 @@ export function AdLimitModal({ isOpen, onClose, reason = 'LIMIT_REACHED' }: AdLi
             </div>
             <div className="space-y-3">
                <h3 className="text-3xl sm:text-4xl font-black font-headline text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Access Restored!</h3>
-               <p className="text-slate-500 dark:text-slate-400 font-medium text-base">Your wallet has been synchronized. You can now close the ad tab and continue your elite study session.</p>
+               <p className="text-slate-500 dark:text-slate-400 font-medium text-base">Your wallet has been synchronized. You can now continue your elite study session.</p>
             </div>
             
             <div className="pt-2">
