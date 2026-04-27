@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -336,7 +335,7 @@ export default function AssessmentsPage() {
                            <FileUp className="h-5 w-5 sm:h-8 sm:w-8 text-primary group-hover:scale-110 transition-transform" />
                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-primary">Upload Document</span>
                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">PDF, DOCX, TXT</span>
-                           <span className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">Cost: 1 Coin</span>
+                           <span className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">Cost: 1 Credit</span>
                         </div>
                       )}
                     </label>
@@ -454,7 +453,7 @@ export default function AssessmentsPage() {
                 <div className="flex flex-col gap-2 pt-4">
                   <Button onClick={handleGenerate} disabled={isLoading} className="w-full h-14 sm:h-18 rounded-[1.2rem] sm:rounded-[1.5rem] bg-primary hover:bg-primary/90 text-white font-black text-base sm:text-lg shadow-xl group">
                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Sparkles className="h-5 w-5 mr-2 group-hover:scale-125 transition-transform" />}
-                    {isLoading ? "Forging Session..." : "Begin Session (1 Coin)"}
+                    {isLoading ? "Forging Session..." : "Begin Session (1 Credit)"}
                   </Button>
                   <Button variant="ghost" onClick={() => setStep(3)} className="h-10 rounded-xl font-black text-[8px] uppercase tracking-[0.4em] text-slate-300">Back to Format</Button>
                 </div>
@@ -614,16 +613,6 @@ export default function AssessmentsPage() {
                      </div>
                   </div>
                   
-                  <div className="bg-slate-900 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[1.8rem] border border-amber-500/20 flex items-center justify-between shadow-xl relative overflow-hidden text-left">
-                    <div className="space-y-1 relative z-10">
-                      <p className="text-[8px] font-black text-amber-500 uppercase tracking-[0.3em]">Scholar Reward</p>
-                      <h3 className="text-2xl sm:text-5xl font-black text-amber-400">+{essayResult.evaluationData.coinsEarned}</h3>
-                    </div>
-                    <div className="h-10 w-10 sm:h-20 sm:w-20 rounded-[0.8rem] sm:rounded-[1rem] bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-inner">
-                      <Coins className="h-5 w-5 sm:h-10 sm:w-10 text-amber-500" />
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-1 gap-3 text-left">
                     {[
                       { label: "Grammar Accuracy", val: essayResult.evaluationData.grammarScore, icon: Zap },
@@ -654,7 +643,7 @@ export default function AssessmentsPage() {
                       className="w-full h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-[0.3em] flex items-center justify-center gap-3"
                     >
                       <FileText className="h-4 w-4" />
-                      {showMasterclass ? "Hide Masterclass Answer" : "See How to Improve Your Answer"}
+                      {showMasterclass ? "Hide Masterclass Answer" : "See the Ideal Scholar Answer"}
                     </Button>
 
                     {showMasterclass && (
@@ -667,7 +656,7 @@ export default function AssessmentsPage() {
                     )}
                   </div>
 
-                  <Button onClick={() => nextItem()} className="w-full h-14 sm:h-16 rounded-[1rem] sm:rounded-[1.2rem] bg-primary text-white font-black text-base sm:text-lg shadow-xl active:scale-95 transition-all">
+                  <Button onClick={() => nextItem()} className="w-full h-12 sm:h-14 rounded-[1rem] sm:rounded-[1.2rem] bg-primary text-white font-black text-sm sm:text-base shadow-xl active:scale-95 transition-all">
                     Next Challenge <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </div>

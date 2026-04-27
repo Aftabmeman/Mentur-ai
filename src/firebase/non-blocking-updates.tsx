@@ -1,4 +1,3 @@
-
 'use client';
     
 import {
@@ -37,7 +36,6 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
 /**
  * Validates wallet balance and daily limits, then deducts coins.
  * Returns true if deduction was successful, false otherwise.
- * ALSO handles migration for old users who don't have the coin field yet.
  */
 export async function validateAndDeductCoins(db: Firestore, userId: string, cost: number): Promise<{ success: boolean; error?: string }> {
   const profileRef = doc(db, 'users', userId, 'profile', 'stats');
@@ -80,7 +78,7 @@ export async function validateAndDeductCoins(db: Firestore, userId: string, cost
     return { success: false, error: "Insufficient coins! Please wait for your monthly allowance or upgrade." };
   }
 
-  // 4. Update Database
+  // 4. Update Database (Pure Consumption)
   try {
     await updateDoc(profileRef, {
       coinBalance: currentBalance - cost,
@@ -91,7 +89,6 @@ export async function validateAndDeductCoins(db: Firestore, userId: string, cost
     });
     return { success: true };
   } catch (e) {
-    // If updateDoc fails (maybe first time adding these fields), try setDoc with merge
     try {
        await setDoc(profileRef, {
           coinBalance: currentBalance - cost,
@@ -108,14 +105,13 @@ export async function validateAndDeductCoins(db: Firestore, userId: string, cost
 }
 
 /**
- * Increments user coins (Rewards) and assessment counts in Firestore.
+ * Increments assessment counts in Firestore without granting coins.
  */
-export function incrementUserStats(db: Firestore, userId: string, coins: number, isAssessment: boolean = true) {
+export function incrementUserStats(db: Firestore, userId: string, isAssessment: boolean = true) {
   const profileRef = doc(db, 'users', userId, 'profile', 'stats'); 
   
   setDoc(profileRef, {
     id: userId,
-    coinBalance: increment(coins), 
     assessmentsDone: isAssessment ? increment(1) : increment(0),
     updatedAt: new Date().toISOString()
   }, { merge: true }).catch(error => {

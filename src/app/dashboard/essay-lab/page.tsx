@@ -16,7 +16,8 @@ import {
   Trophy,
   Zap,
   Target,
-  Globe
+  Globe,
+  FileText
 } from "lucide-react"
 import { 
   Select, 
@@ -31,7 +32,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
-import { incrementUserStats } from "@/firebase/non-blocking-updates"
+import { incrementUserStats, validateAndDeductCoins } from "@/firebase/non-blocking-updates"
 import { doc } from "firebase/firestore"
 import { Progress } from "@/components/ui/progress"
 
@@ -67,6 +68,7 @@ export default function WritingWizardPage() {
   
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<EvaluateEssayFeedbackOutput | null>(null)
+  const [showMasterclass, setShowMasterclass] = useState(false)
 
   useEffect(() => {
     if (profile?.preferredLanguage) {
@@ -80,7 +82,15 @@ export default function WritingWizardPage() {
       return
     }
 
+    // Wallet Check: Writing Lab costs 1 Coin
+    const walletCheck = await validateAndDeductCoins(db!, user!.uid, 1);
+    if (!walletCheck.success) {
+      toast({ title: "Access Denied", description: walletCheck.error, variant: "destructive" });
+      return;
+    }
+
     setIsLoading(true)
+    setShowMasterclass(false)
     try {
       const evaluation = await evaluateEssayFeedback({
         topic: "Self Practice",
@@ -95,8 +105,8 @@ export default function WritingWizardPage() {
       } else {
         setResult(evaluation)
         setStep(5)
-        if (db && user?.uid && evaluation.evaluationData.coinsEarned > 0) {
-          incrementUserStats(db, user.uid, evaluation.evaluationData.coinsEarned, true);
+        if (db && user?.uid) {
+          incrementUserStats(db, user.uid, true);
         }
         confetti({ particleCount: 200, spread: 90, origin: { y: 0.7 } })
       }
@@ -186,7 +196,7 @@ export default function WritingWizardPage() {
                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[0.8rem] sm:rounded-[1.2rem] bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center shadow-sm"><BookOpen className="h-4 w-4 sm:h-6 sm:w-6 text-emerald-600" /></div>
                    <CardTitle className="text-base sm:text-xl font-black font-headline tracking-tight">Scholar Editor</CardTitle>
                 </div>
-                <Badge variant="outline" className="rounded-full font-black text-[6px] sm:text-[7px] uppercase tracking-[0.4em] border-emerald-500/40 text-emerald-600 px-4 sm:px-6 py-1.5 sm:py-2 bg-emerald-50/50">Active Session</Badge>
+                <Badge variant="outline" className="rounded-full font-black text-[6px] sm:text-[7px] uppercase tracking-[0.4em] border-emerald-500/40 text-emerald-600 px-4 sm:px-6 py-1.5 sm:py-2 bg-emerald-50/50">Cost: 1 Coin</Badge>
               </CardHeader>
               <CardContent className="p-6 sm:p-10 pt-6 sm:pt-8 space-y-6 sm:space-y-8">
                 <div className="bg-amber-50 dark:bg-amber-900/10 p-4 sm:p-6 rounded-[1rem] sm:rounded-[1.5rem] border-none flex items-start gap-3 sm:gap-4 shadow-inner">
@@ -229,16 +239,6 @@ export default function WritingWizardPage() {
                </div>
             </div>
 
-            <div className="bg-slate-900 p-6 sm:p-8 rounded-[1.8rem] sm:rounded-[2.5rem] border border-amber-500/20 flex items-center justify-between shadow-2xl relative overflow-hidden group text-left">
-              <div className="space-y-1 relative z-10">
-                <p className="text-[8px] sm:text-[9px] font-black text-amber-500 uppercase tracking-[0.3em] sm:tracking-[0.4em]">Scholar Reward</p>
-                <h3 className="text-2xl sm:text-6xl font-black text-amber-400">+{result.evaluationData.coinsEarned}</h3>
-              </div>
-              <div className="h-12 w-12 sm:h-24 sm:w-24 rounded-[1rem] sm:rounded-[1.5rem] bg-amber-500/10 flex items-center justify-center border border-amber-500/20 relative z-10 shadow-inner">
-                <Coins className="h-6 w-6 sm:h-12 sm:w-12 text-amber-500" />
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 gap-3 sm:gap-4 text-left">
               {[
                 { label: "Grammar Accuracy", val: result.evaluationData.grammarScore, icon: Zap },
@@ -263,13 +263,26 @@ export default function WritingWizardPage() {
             </div>
             
             <div className="space-y-4 sm:space-y-6">
-              <Badge className="bg-slate-900 text-white uppercase font-black text-[7px] sm:text-[8px] tracking-[0.4em] sm:tracking-[0.5em] px-6 sm:px-10 py-2 sm:py-4 rounded-full shadow-2xl">The Masterclass Answer</Badge>
-              <div className="p-6 sm:p-8 bg-slate-900 dark:bg-black rounded-[1.8rem] sm:rounded-[2.5rem] text-slate-300 leading-relaxed text-sm sm:text-xl italic whitespace-pre-wrap border border-white/5 shadow-xl text-left">
-                 {result.suggestedRewrite}
-              </div>
+              <Button 
+                onClick={() => setShowMasterclass(!showMasterclass)} 
+                variant="outline" 
+                className="w-full h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-[0.3em] flex items-center justify-center gap-3"
+              >
+                <FileText className="h-4 w-4" />
+                {showMasterclass ? "Hide Masterclass Answer" : "See the Ideal Scholar Answer"}
+              </Button>
+
+              {showMasterclass && (
+                <div className="animate-in slide-in-from-top-4 duration-500 space-y-4">
+                  <Badge className="bg-slate-900 text-white uppercase font-black text-[7px] sm:text-[8px] tracking-[0.4em] sm:tracking-[0.5em] px-6 sm:px-10 py-2 sm:py-4 rounded-full shadow-2xl">The Masterclass Answer</Badge>
+                  <div className="p-6 sm:p-8 bg-slate-900 dark:bg-black rounded-[1.8rem] sm:rounded-[2.5rem] text-slate-300 leading-relaxed text-sm sm:text-xl italic whitespace-pre-wrap border border-white/5 shadow-xl text-left">
+                     {result.suggestedRewrite}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <Button onClick={() => setStep(1)} className="w-full h-16 sm:h-20 rounded-[1.8rem] sm:rounded-[2.5rem] font-black text-lg sm:text-2xl bg-primary text-white shadow-3xl hover:bg-primary/90 transition-all active:scale-95 shadow-primary/30">
+            <Button onClick={() => { setStep(1); setResult(null); }} className="w-full h-16 sm:h-20 rounded-[1.8rem] sm:rounded-[2.5rem] font-black text-lg sm:text-2xl bg-primary text-white shadow-3xl hover:bg-primary/90 transition-all active:scale-95 shadow-primary/30">
               New Practice Session
             </Button>
           </div>

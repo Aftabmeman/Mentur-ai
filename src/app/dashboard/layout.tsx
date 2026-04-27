@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useAuth } from "@/components/providers/AuthProvider"
@@ -43,7 +42,7 @@ export default function DashboardLayout({
 
   const hideNav = pathname === "/dashboard/verify-email";
 
-  // If coinBalance is missing, it means old user or not yet set, default to 50 for display
+  // Display logic for balance and daily quota
   const currentBalance = typeof profile?.coinBalance === 'number' ? profile.coinBalance : 50;
   const dailyUsed = profile?.dailyCoinsUsed || 0;
   const quotaRemaining = Math.max(0, 5 - dailyUsed);
@@ -60,11 +59,11 @@ export default function DashboardLayout({
           <div className="hidden sm:flex items-center gap-3">
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full border border-amber-100 dark:border-amber-800/30">
                <Coins className="h-4 w-4 text-amber-500" />
-               <span className="text-xs font-black text-amber-700 dark:text-amber-400">{currentBalance}</span>
+               <span className="text-xs font-black text-amber-700 dark:text-amber-400">{currentBalance} Coins</span>
             </div>
             <div className="flex items-center gap-1.5 bg-primary/5 px-3 py-1.5 rounded-full border border-primary/10">
                <Zap className="h-4 w-4 text-primary" />
-               <span className="text-[10px] font-black uppercase tracking-tighter text-primary">Quota: {quotaRemaining}/5</span>
+               <span className="text-[10px] font-black uppercase tracking-tighter text-primary">Daily Quota: {quotaRemaining}/5</span>
             </div>
           </div>
 
@@ -80,11 +79,11 @@ export default function DashboardLayout({
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar pb-32 sm:pb-40 px-4 sm:px-5 pt-4 sm:pt-6">
-        {/* Mobile Stats Bar */}
+        {/* Mobile Stats Bar: Focused on Quota & Credits */}
         <div className="sm:hidden flex items-center justify-center gap-3 mb-4">
            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-4 py-1.5 rounded-full border border-amber-100 dark:border-amber-800/30">
                <Coins className="h-3.5 w-3.5 text-amber-500" />
-               <span className="text-[11px] font-black text-amber-700 dark:text-amber-400">{currentBalance} Coins</span>
+               <span className="text-[11px] font-black text-amber-700 dark:text-amber-400">{currentBalance} Credits</span>
             </div>
             <div className="flex items-center gap-1.5 bg-primary/5 px-4 py-1.5 rounded-full border border-primary/10">
                <Zap className="h-3.5 w-3.5 text-primary" />

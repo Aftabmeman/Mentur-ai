@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -11,7 +10,8 @@ import {
   Sparkles,
   Zap,
   Coins,
-  Loader2
+  Loader2,
+  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -52,34 +52,43 @@ export default function DashboardPage() {
     );
   }
 
+  // Display logic for balance and daily quota
+  const currentBalance = typeof profile?.coinBalance === 'number' ? profile.coinBalance : 50;
+  const dailyUsed = profile?.dailyCoinsUsed || 0;
+  const quotaRemaining = Math.max(0, 5 - dailyUsed);
+
   const statsConfig = [
     { 
-      label: "Mastery", 
-      value: profile?.overallScore ? `${profile.overallScore}%` : `--%`, 
-      icon: Target, 
-      color: "text-primary", 
-      bg: "bg-primary/10" 
-    },
-    { 
-      label: "Coins", 
-      value: profile?.totalCoins?.toString() ?? "0", 
+      label: "Credits", 
+      value: currentBalance.toString(), 
       icon: Coins, 
       color: "text-amber-500", 
-      bg: "bg-amber-100/50" 
+      bg: "bg-amber-100/50",
+      desc: "Available Balance"
+    },
+    { 
+      label: "Quota", 
+      value: `${quotaRemaining}/5`, 
+      icon: Zap, 
+      color: "text-primary", 
+      bg: "bg-primary/10",
+      desc: "Daily Limit"
     },
     { 
       label: "Sets", 
       value: profile?.assessmentsDone?.toString() ?? "0", 
       icon: Trophy, 
       color: "text-blue-500", 
-      bg: "bg-blue-50" 
+      bg: "bg-blue-50",
+      desc: "Total Mastered"
     },
     { 
-      label: "Level", 
+      label: "Status", 
       value: profile?.level ?? `Lvl 1`, 
-      icon: Zap, 
+      icon: Target, 
       color: "text-emerald-500", 
-      bg: "bg-emerald-50" 
+      bg: "bg-emerald-50",
+      desc: "Academic Level"
     },
   ]
 
@@ -97,7 +106,7 @@ export default function DashboardPage() {
         <h1 className="text-2xl sm:text-5xl font-black tracking-tighter text-slate-900 dark:text-white font-headline leading-tight text-balance">
           Welcome, {user?.displayName?.split(' ')[0] || 'Scholar'}
         </h1>
-        <p className="text-slate-500 text-sm sm:text-lg font-medium leading-relaxed">Your academic journey is looking bright today.</p>
+        <p className="text-slate-500 text-sm sm:text-lg font-medium leading-relaxed">System status: Normal. Daily quota synchronized.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:gap-8">
@@ -111,6 +120,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">{stat.label}</p>
                   <h3 className="text-xl sm:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{stat.value}</h3>
+                  <p className="text-[7px] font-bold text-slate-300 uppercase mt-2 tracking-widest">{stat.desc}</p>
                 </div>
               </div>
             </CardContent>
@@ -129,13 +139,13 @@ export default function DashboardPage() {
               </div>
               <div className="space-y-3 sm:space-y-5">
                 <h3 className="text-2xl sm:text-4xl font-black font-headline leading-tight tracking-tight">Forge Your Elite Potential</h3>
-                <p className="text-slate-400 text-sm sm:text-lg font-medium leading-relaxed max-w-[400px]">Transform static notes into deep, adaptive practice modules instantly.</p>
+                <p className="text-slate-400 text-sm sm:text-lg font-medium leading-relaxed max-w-[400px]">System ready for generation. Assessment cost: 1 Credit.</p>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
               <Button className="flex-1 h-14 sm:h-18 px-8 bg-primary hover:bg-primary/90 text-white font-black rounded-[1.5rem] shadow-xl text-lg sm:text-xl active:scale-95 transition-all" asChild>
-                <Link href="/dashboard/assessments">Create Journey</Link>
+                <Link href="/dashboard/assessments">Start Sequence</Link>
               </Button>
               <Button variant="ghost" className="flex-1 h-14 sm:h-18 px-8 border border-white/10 text-white hover:bg-white/10 rounded-[1.5rem] font-black bg-transparent text-lg sm:text-xl active:scale-95 transition-all" asChild>
                 <Link href="/dashboard/essay-lab">Writing Lab</Link>
@@ -143,51 +153,11 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="border-none shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900/50 p-8 sm:p-16 border border-slate-50 dark:border-white/5">
-          <div className="flex items-center justify-between mb-8 sm:mb-14 px-1">
-            <div>
-              <h3 className="font-headline font-black text-xl sm:text-3xl dark:text-white tracking-tight">Trend</h3>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">Scholar Activity</p>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4 bg-emerald-50 dark:bg-emerald-950 px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-emerald-100 dark:border-emerald-800/30">
-               <TrendingUp className="h-4 w-4 text-emerald-600" />
-               <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Improving</span>
-            </div>
-          </div>
-          
-          <div className="h-[250px] sm:h-[300px] w-full">
-            <ChartContainer config={chartConfig} className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={performanceData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" opacity={0.3} />
-                  <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 900 }}
-                    dy={15}
-                  />
-                  <YAxis hide domain={[0, 100]} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="score" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={4} 
-                    dot={{ r: 5, fill: 'hsl(var(--primary))', strokeWidth: 3, stroke: '#fff' }}
-                    activeDot={{ r: 8, strokeWidth: 0 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </div>
-        </Card>
       </div>
 
       <footer className="pt-20 pb-10 text-center opacity-40">
         <p className="text-[9px] font-black uppercase tracking-[0.5em] text-slate-300 dark:text-slate-600 flex items-center justify-center gap-3">
-          <Sparkles className="h-5 w-5" /> Discate Engine — Peak Performance
+          <Sparkles className="h-5 w-5" /> Discate Engine — Consumption Controlled
         </p>
       </footer>
     </div>
