@@ -12,6 +12,7 @@ import { NotificationManager } from "@/components/NotificationManager"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { doc } from "firebase/firestore"
 import { Badge } from "@/components/ui/badge"
+import { RewardedAdButton } from "@/components/RewardedAdButton"
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,10 @@ export default function DashboardLayout({
         
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="hidden sm:flex items-center gap-3">
+            <RewardedAdButton 
+              label="+1 Coin" 
+              className="h-9 px-4 rounded-xl border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100" 
+            />
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full border border-amber-100 dark:border-amber-800/30">
                <Coins className="h-4 w-4 text-amber-500" />
                <span className="text-xs font-black text-amber-700 dark:text-amber-400">{currentBalance} Coins</span>
@@ -80,15 +85,21 @@ export default function DashboardLayout({
 
       <main className="flex-1 overflow-y-auto no-scrollbar pb-32 sm:pb-40 px-4 sm:px-5 pt-4 sm:pt-6">
         {/* Mobile Stats Bar: Focused on Quota & Credits */}
-        <div className="sm:hidden flex items-center justify-center gap-3 mb-4">
-           <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-4 py-1.5 rounded-full border border-amber-100 dark:border-amber-800/30">
-               <Coins className="h-3.5 w-3.5 text-amber-500" />
-               <span className="text-[11px] font-black text-amber-700 dark:text-amber-400">{currentBalance} Credits</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-primary/5 px-4 py-1.5 rounded-full border border-primary/10">
-               <Zap className="h-3.5 w-3.5 text-primary" />
-               <span className="text-[9px] font-black uppercase tracking-tighter text-primary">Daily: {quotaRemaining}/5</span>
-            </div>
+        <div className="sm:hidden flex flex-col items-center gap-3 mb-4">
+           <div className="flex items-center justify-center gap-2 w-full">
+              <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-4 py-1.5 rounded-full border border-amber-100 dark:border-amber-800/30">
+                  <Coins className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-[11px] font-black text-amber-700 dark:text-amber-400">{currentBalance} Credits</span>
+               </div>
+               <div className="flex items-center gap-1.5 bg-primary/5 px-4 py-1.5 rounded-full border border-primary/10">
+                  <Zap className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-[9px] font-black uppercase tracking-tighter text-primary">Daily: {quotaRemaining}/5</span>
+               </div>
+           </div>
+           <RewardedAdButton 
+             label="Get +1 Free Coin" 
+             className="w-full max-w-[280px] h-10 border-amber-200 bg-white shadow-sm" 
+           />
         </div>
         
         <div className="max-w-2xl mx-auto">

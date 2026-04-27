@@ -105,6 +105,23 @@ export async function validateAndDeductCoins(db: Firestore, userId: string, cost
 }
 
 /**
+ * Increments coin balance after a rewarded ad.
+ */
+export async function grantAdReward(db: Firestore, userId: string) {
+  const profileRef = doc(db, 'users', userId, 'profile', 'stats');
+  try {
+    await updateDoc(profileRef, {
+      coinBalance: increment(1),
+      updatedAt: new Date().toISOString()
+    });
+    return { success: true };
+  } catch (e) {
+    console.error("Ad reward sync failed:", e);
+    return { success: false };
+  }
+}
+
+/**
  * Increments assessment counts in Firestore without granting coins.
  */
 export function incrementUserStats(db: Firestore, userId: string, isAssessment: boolean = true) {
